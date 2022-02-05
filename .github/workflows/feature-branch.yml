@@ -1,0 +1,38 @@
+name: Application Test
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip-ci]')"
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - uses: DeLaGuardo/setup-graalvm@4.0
+      with:
+        graalvm: '21.3.0'
+        java: 'java11'
+    - name: Install native-image component
+      run: gu install native-image
+
+    - name: Setup Maven settings
+      uses: s4u/maven-settings-action@v2.4.0
+      with:
+        servers: |
+          [{
+            "id": "github-packages",
+            "username": "${{ secrets.PACKAGE_GITHUB_USERNAME }}",
+            "password": "${{ secrets.PACKAGE_GITHUB_PASSWORD }}"
+          }]
+
+    - name: Test
+      run: mvn clean test
+
+    - name: Native Test
+      run: mvn verify -Pnative
