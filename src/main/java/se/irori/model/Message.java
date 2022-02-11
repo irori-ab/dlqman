@@ -1,7 +1,6 @@
 package se.irori.model;
 
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,7 +8,7 @@ import lombok.Getter;
 @Builder
 public class Message {
   private String id;
-  private String topicId;
+  private String sourceId;
   private Integer partition;
   private Long offset;
   private byte[] payload;
