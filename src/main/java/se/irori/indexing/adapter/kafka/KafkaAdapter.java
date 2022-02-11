@@ -35,18 +35,18 @@ public class KafkaAdapter implements IndexingAdapter {
         byte[].class, byte[].class);
   }
 
-  public Multi<Message> consumeSource(Source topic) {
-    kafkaConsumer.subscribeAndAwait(topic.getName());
+  public Multi<Message> consumeSource(Source source) {
+    kafkaConsumer.subscribeAndAwait(source.getName());
     return kafkaConsumer.toMulti()
-        .map(this::indexRecord);
+        .map(record -> indexRecord(record, source));
   }
 
-  private Message indexRecord(KafkaConsumerRecord<byte[], byte[]> record) {
+  private Message indexRecord(KafkaConsumerRecord<byte[], byte[]> record, Source source) {
     log.debug("Indexing record with key [{}] & value [{}]", record.key(), record.value());
     return Message.builder()
         .id(UUID.randomUUID().toString())
-        //TODO Should be a reference to a "topic". Not the topic name.
-        .topicId(record.topic())
+        //TODO Should be a reference to a "source". Not the topic name.
+        .sourceId(source.getId())
         .offset(record.offset())
         .partition(record.partition())
         .payload(record.value())

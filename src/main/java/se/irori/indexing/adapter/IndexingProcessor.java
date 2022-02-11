@@ -17,7 +17,6 @@ public class IndexingProcessor {
     startIndexingProcess();
   }
 
-
   public void startIndexingProcess() {
     KafkaAdapter testKafkaAdapter = new KafkaAdapter(
         KafkaAdapterConfiguration.builder()
@@ -27,7 +26,7 @@ public class IndexingProcessor {
 
     testKafkaAdapter.consumeSource(
             Source.builder()
-                .name("test-topic")
+                .name("spring-cloud-dlq-topic")
                 .build())
         .subscribe()
         .with(message -> log.info(
