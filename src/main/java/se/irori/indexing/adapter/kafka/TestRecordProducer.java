@@ -32,6 +32,10 @@ public class TestRecordProducer {
                   .withTopic("spring-cloud-dlq-topic")
                   .withHeaders(List.of(
                       new RecordHeader(
+                          "some random header",
+                          "blabla".getBytes(StandardCharsets.UTF_8)
+                      ),
+                      new RecordHeader(
                           "X_ORIGINAL_TOPIC",
                           "original-topic".getBytes(StandardCharsets.UTF_8)),
                       new RecordHeader(

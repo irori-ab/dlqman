@@ -8,11 +8,13 @@ import io.vertx.mutiny.kafka.client.producer.KafkaHeader;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes.BytesSerde;
 import se.irori.indexing.adapter.IndexingAdapter;
 import se.irori.model.Message;
 import se.irori.model.MetaData;
+import se.irori.model.MetaDataType;
 import se.irori.model.Source;
 
 @Slf4j
@@ -43,16 +45,28 @@ public class KafkaAdapter implements IndexingAdapter {
 
   private Message indexRecord(KafkaConsumerRecord<byte[], byte[]> record, Source source) {
     log.debug("Indexing record with key [{}] & value [{}]", record.key(), record.value());
+    HeaderExtractor headerExtractor = new HeaderExtractor(record.headers());
+
     return Message.builder()
         .id(UUID.randomUUID().toString())
-        //TODO Should be a reference to a "source". Not the topic name.
         .sourceId(source.getId())
-        .offset(record.offset())
-        .partition(record.partition())
+        .offset(headerExtractor.getOffset())
+        .partition(headerExtractor.getPartition())
         .payload(record.value())
         .payloadString(new String(record.value()))
-        .metaDataList(parseMetaData(record.headers()))
+        .metaDataList(parseMetaDataFromHeaders(headerExtractor.getNonMatchedHeaders()))
         .build();
+  }
+
+  private List<MetaData> parseMetaDataFromHeaders(Map<String, String> headers) {
+    return headers.entrySet()
+        .stream()
+        .map(entry -> MetaData.builder()
+            .type(MetaDataType.HEADER)
+            .key(entry.getKey())
+            .value(entry.getValue())
+            .build())
+        .collect(Collectors.toList());
   }
 
   private List<MetaData> parseMetaData(List<KafkaHeader> headers) {

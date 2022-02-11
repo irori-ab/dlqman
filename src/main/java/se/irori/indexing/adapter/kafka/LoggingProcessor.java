@@ -1,16 +1,15 @@
-package se.irori.indexing.adapter;
+package se.irori.indexing.adapter.kafka;
 
 import io.quarkus.runtime.StartupEvent;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import lombok.extern.slf4j.Slf4j;
-import se.irori.indexing.adapter.kafka.KafkaAdapter;
-import se.irori.indexing.adapter.kafka.KafkaAdapterConfiguration;
 import se.irori.model.Source;
 
 @Slf4j
 @ApplicationScoped
-public class IndexingProcessor {
+public class LoggingProcessor {
 
   void onApplicationStart(@Observes StartupEvent startupEvent) {
     log.info("Starting configured indexing processes:");
@@ -30,10 +29,14 @@ public class IndexingProcessor {
                 .build())
         .subscribe()
         .with(message -> log.info(
-            "Message arrived to processor with id [{}] and payloadString [{}]. Offset [{}], Partition[{}]",
+            "Message arrived to processor with id [{}] and payloadString [{}]. Offset [{}], Partition[{}]. Metadata[{}]",
             message.getId(),
             message.getPayloadString(),
             message.getOffset(),
-            message.getPartition()));
+            message.getPartition(),
+            message.getMetaDataList()
+                .stream().map(metaData -> String.format("Key: [%s], Value: [%s], Type [%s].",
+                    metaData.getKey(), metaData.getValue(), metaData.getType()))
+                .collect(Collectors.toList())));
   }
 }
