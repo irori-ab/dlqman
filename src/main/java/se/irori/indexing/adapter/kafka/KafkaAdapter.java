@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes.BytesSerde;
 import se.irori.indexing.adapter.IndexingAdapter;
+import se.irori.indexing.adapter.configuration.SourceConfiguration.KafkaSourceConfiguration;
 import se.irori.model.Message;
 import se.irori.model.MetaData;
 import se.irori.model.MetaDataType;
@@ -22,12 +23,12 @@ public class KafkaAdapter implements IndexingAdapter {
 
   KafkaConsumer<byte[], byte[]> kafkaConsumer;
 
-  public KafkaAdapter(KafkaAdapterConfiguration configuration) {
+  public KafkaAdapter(KafkaSourceConfiguration configuration) {
     Map<String, String> consumerConfiguration = Map.of(
-        "bootstrap.servers", configuration.getBootstrapServers(),
+        "bootstrap.servers", configuration.bootstrapServers(),
         "key.deserializer", new BytesSerde().deserializer().getClass().getName(),
         "value.deserializer", new BytesSerde().serializer().getClass().getName(),
-        "group.id", configuration.getGroupId(),
+        "group.id", configuration.groupId(),
         "auto.offset.reset", "earliest",
         "enable.auto.commit", "false");
 
