@@ -1,0 +1,4 @@
+quarkus:
+  kafka:
+    devservices:
+      port: 9992
