@@ -1,5 +1,5 @@
 package se.irori.model;
 
 public enum ProcessState {
-  RUNNING, CANCELLED, FAILED, COMPLETED;
+  CREATED, RUNNING, CANCELLED, FAILED, COMPLETED;
 }
