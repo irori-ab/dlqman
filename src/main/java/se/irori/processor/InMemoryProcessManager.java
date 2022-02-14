@@ -32,15 +32,7 @@ public class InMemoryProcessManager implements ProcessManager {
   void onApplicationTermination(@Observes ShutdownEvent shutdownEvent) {
     log.info("Received shutdown event, starting cancelation of processes");
     processMap.values()
-        .forEach(process -> {
-          try {
-            log.info("Shutting down process with id [{}]", process.getId());
-            managedExecutor.runAsync(() -> process.getCallback().cancel())
-                .get();
-          } catch (InterruptedException | ExecutionException e) {
-            log.error("Ungraceful shutdown of process with id [{}]", process.getId(), e);
-          }
-        });
+        .forEach(this::cancelProcess);
   }
 
   @Override
@@ -85,8 +77,14 @@ public class InMemoryProcessManager implements ProcessManager {
   }
 
   public void cancelProcess(Process process) {
-    process.getCallback().cancel();
-    process.setProcessState(ProcessState.CANCELLED);
+    try {
+      log.info("Shutting down process with id [{}]", process.getId());
+      process.setProcessState(ProcessState.CANCELLED);
+      managedExecutor.runAsync(() -> process.getCallback().cancel())
+          .get();
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Ungraceful shutdown of process with id [{}]", process.getId(), e);
+    }
   }
 
   private void handleOnItemEvent(Message message, Process process) {
