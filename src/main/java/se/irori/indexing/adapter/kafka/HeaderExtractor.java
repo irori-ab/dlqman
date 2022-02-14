@@ -9,27 +9,16 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Class that is responsible to extract 3rd party framework headers.
- * <p>
- * Spring cloud: https://github.com/spring-cloud/spring-cloud-stream-binder-kafka/blob/main/spring-cloud-stream-binder-kafka/src/main/java/org/springframework/cloud/stream/binder/kafka/KafkaMessageChannelBinder.java
- * <p>
- * Quarkus (Smallrye): https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.1/kafka/kafka.html#_failure_management
- * Connect: https://issues.apache.org/jira/browse/KAFKA-7003
  *
+ * <p>Spring cloud: https://github.com/spring-cloud/spring-cloud-stream-binder-kafka/blob/main/spring-cloud-stream-binder-kafka/src/main/java/org/springframework/cloud/stream/binder/kafka/KafkaMessageChannelBinder.java
+ *
+ * <p>Quarkus (Smallrye): https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.1/kafka/kafka.html#_failure_management
+ * Connect: https://issues.apache.org/jira/browse/KAFKA-7003
  */
 @Slf4j
 @Getter
 public class HeaderExtractor {
 
-  private final List<KafkaHeader> headerList;
-  private String topic;
-  private Integer partition;
-  private Long offset;
-  private String timestamp;
-  private String timestampType;
-  private String exceptionStackTrace;
-  private String exceptionMessage;
-
-  private Map<String, String> nonMatchedHeaders;
   private final static String SPRING_CLOUD_TOPIC = "X_ORIGINAL_TOPIC";
   private final static String SPRING_CLOUD_PARTITION = "X_ORIGINAL_PARTITION";
   private final static String SPRING_CLOUD_OFFSET = "X_ORIGINAL_OFFSET";
@@ -43,10 +32,23 @@ public class HeaderExtractor {
   private final static String SMALLRYE_OFFSET = "dead-letter-offset";
 
   private final static List<String> topicHeaders = List.of(SPRING_CLOUD_TOPIC, SMALLRYE_TOPIC);
-  private final static List<String> partitionHeaders = List.of(SPRING_CLOUD_PARTITION, SMALLRYE_PARTITION);
+  private final static List<String> partitionHeaders = List.of(SPRING_CLOUD_PARTITION,
+      SMALLRYE_PARTITION);
   private final static List<String> offsetHeaders = List.of(SPRING_CLOUD_OFFSET, SMALLRYE_OFFSET);
   private final static List<String> timeStampHeaders = List.of(SPRING_CLOUD_TIMESTAMP);
   private final static List<String> timeStampTypeHeaders = List.of(SPRING_CLOUD_TIMESTAMP_TYPE);
+
+  private final List<KafkaHeader> headerList;
+
+  private String topic;
+  private Integer partition;
+  private Long offset;
+  private String timestamp;
+  private String timestampType;
+  private String exceptionStackTrace;
+  private String exceptionMessage;
+
+  private final Map<String, String> nonMatchedHeaders;
 
   public HeaderExtractor(List<KafkaHeader> headerList) {
     this.headerList = headerList;

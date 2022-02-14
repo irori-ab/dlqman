@@ -2,3 +2,10 @@ quarkus:
   kafka:
     devservices:
       port: 9992
+
+source:
+  kafka:
+    - bootstrap-servers: localhost:9992
+      group-id: group-id
+      topics:
+        - spring-cloud-dlq-topic

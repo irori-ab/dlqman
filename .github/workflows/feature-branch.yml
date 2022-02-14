@@ -21,15 +21,17 @@ jobs:
     - name: Install native-image component
       run: gu install native-image
 
-    - name: Setup Maven settings
-      uses: s4u/maven-settings-action@v2.4.0
-      with:
-        servers: |
-          [{
-            "id": "github-packages",
-            "username": "${{ secrets.PACKAGE_GITHUB_USERNAME }}",
-            "password": "${{ secrets.PACKAGE_GITHUB_PASSWORD }}"
-          }]
+# As we do not have to read any "internal" dependencies from Github Packages,
+# this is not needed currently
+#    - name: Setup Maven settings
+#      uses: s4u/maven-settings-action@v2.4.0
+#      with:
+#        servers: |
+#          [{
+#            "id": "github-packages",
+#            "username": "${{ secrets.PACKAGE_GITHUB_USERNAME }}",
+#            "password": "${{ secrets.PACKAGE_GITHUB_PASSWORD }}"
+#          }]
 
     - name: Test
       run: mvn clean test
