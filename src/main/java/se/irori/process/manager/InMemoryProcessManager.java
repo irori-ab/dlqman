@@ -1,6 +1,7 @@
 package se.irori.process.manager;
 
 import io.quarkus.runtime.ShutdownEvent;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.Cancellable;
 import java.util.ArrayList;
@@ -37,7 +38,6 @@ public class InMemoryProcessManager implements ProcessManager {
   public void registerProcess(Process process) {
     log.info("Registering & starting process with id [{}], with source id [{}]",
         process.getId(), process.getSource().getId());
-
     Cancellable callback =
         process.getConsumeSource()
             .flatMap(process.getPersistFunction())

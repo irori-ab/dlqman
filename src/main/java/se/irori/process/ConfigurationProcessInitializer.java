@@ -9,7 +9,7 @@ import se.irori.indexing.adapter.configuration.SourceConfiguration;
 import se.irori.indexing.adapter.kafka.KafkaAdapter;
 import se.irori.model.Process;
 import se.irori.model.Source;
-import se.irori.persistence.DatabaseProcessor;
+import se.irori.persistence.MessageRepository;
 import se.irori.process.manager.ProcessManager;
 
 /**
@@ -17,7 +17,7 @@ import se.irori.process.manager.ProcessManager;
  */
 @ApplicationScoped
 @Slf4j
-public class ConfigurationProcessor {
+public class ConfigurationProcessInitializer {
 
   @Inject
   SourceConfiguration sourceConfiguration;
@@ -26,7 +26,7 @@ public class ConfigurationProcessor {
   ProcessManager processManager;
 
   @Inject
-  DatabaseProcessor databaseProcessor;
+  MessageRepository messageRepository;
 
   void onApplicationStart(@Observes StartupEvent startupEvent) {
     log.info("Starting configured persistence processes:");
@@ -41,8 +41,8 @@ public class ConfigurationProcessor {
             processManager.registerProcess(
                 Process.create(
                     source,
-                    kafkaAdapter.consumeSource(source),
-                    databaseProcessor.persist()));
+                    kafkaAdapter.consume(source),
+                    messageRepository.persist()));
           });
         });
   }
