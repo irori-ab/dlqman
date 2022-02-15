@@ -12,8 +12,9 @@ import se.irori.model.Process;
 public interface ProcessManager {
 
   /**
-   * Register and start a process
-   * @param process
+   * Register and start a process.
+
+   * @param process to start.
    */
   void registerProcess(Process process);
 

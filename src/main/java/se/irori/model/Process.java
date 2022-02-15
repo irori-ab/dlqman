@@ -11,6 +11,10 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * Entity defining a source -> sink process and it´s lifecycle.
+ *
+ */
 @Builder(access = AccessLevel.PRIVATE)
 @Getter
 public class Process {
@@ -27,14 +31,22 @@ public class Process {
   private final Function<Message, Multi<Message>> persistFunction;
   private final Source source;
 
+  /**
+   * Builder method used to construct a Process.
+   *
+   * @param source source to consume messages from.
+   * @param consume consume function returning a {@link Multi}.
+   * @param persistFunction persisting function. Returning a {@link Multi}
+   * @return the process.
+   */
   public static Process create(
       @NotNull Source source,
-      @NotNull Multi<Message> consumeSource,
+      @NotNull Multi<Message> consume,
       @NotNull Function<Message, Multi<Message>> persistFunction) {
     return Process.builder()
         .id(UUID.randomUUID())
         .source(source)
-        .consumeSource(consumeSource)
+        .consumeSource(consume)
         .persistFunction(persistFunction)
         .processState(ProcessState.CREATED)
         .build();

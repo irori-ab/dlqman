@@ -1,16 +1,16 @@
-name: Checkstyle
+#name: Checkstyle
 
-on: pull_request
+#on: pull_request
 
-jobs:
-  checkstyle:
-    runs-on: ubuntu-latest
-    name: checkstyle
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Run check style
-        uses: nikitasavinov/checkstyle-action@master
-        with:
-          github_token: ${{ github.token }}
-          fail_on_error: true
+#jobs:
+#  checkstyle:
+#    runs-on: ubuntu-latest
+#    name: checkstyle
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#      - name: Run check style
+#        uses: nikitasavinov/checkstyle-action@master
+#        with:
+#          github_token: ${{ github.token }}
+#          fail_on_error: true
