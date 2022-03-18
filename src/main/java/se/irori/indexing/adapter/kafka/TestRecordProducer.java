@@ -23,7 +23,7 @@ public class TestRecordProducer {
   public Multi<Message<String>> generateSpringCloudTestRecords() {
     ConsumerRecord<Object, Object> record;
     Random random = new Random();
-    return Multi.createFrom().ticks().every(Duration.ofSeconds(1))
+    return Multi.createFrom().ticks().every(Duration.ofMillis(1000))
         .map(x -> {
           log.info("Sending test record");
           return Message.of("payload")

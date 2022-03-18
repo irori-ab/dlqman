@@ -78,13 +78,9 @@ public class HeaderExtractor {
         timestamp = header.value().toString();
         return;
       }
-      //If the header maps to a known DLQ type we add it to the "rest" map.
+      //If the header does not maps to a known DLQ type we add it to the "rest" map.
       nonMatchedHeaders.put(header.key(), header.value().toString());
     });
-    return this;
-  }
-
-  public HeaderExtractor extract(String frameworkType) {
     return this;
   }
 }
