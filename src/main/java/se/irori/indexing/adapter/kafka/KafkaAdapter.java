@@ -4,7 +4,6 @@ import io.smallrye.mutiny.Multi;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.kafka.client.consumer.KafkaConsumer;
 import io.vertx.mutiny.kafka.client.consumer.KafkaConsumerRecord;
-import io.vertx.mutiny.kafka.client.producer.KafkaHeader;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,8 +13,8 @@ import org.apache.kafka.common.serialization.Serdes.BytesSerde;
 import se.irori.indexing.adapter.IndexingAdapter;
 import se.irori.indexing.adapter.configuration.SourceConfiguration.KafkaSourceConfiguration;
 import se.irori.model.Message;
-import se.irori.model.MetaData;
 import se.irori.model.MetaDataType;
+import se.irori.model.Metadata;
 import se.irori.model.Source;
 
 @Slf4j
@@ -38,8 +37,9 @@ public class KafkaAdapter implements IndexingAdapter {
         byte[].class, byte[].class);
   }
 
-  public Multi<Message> consumeSource(Source source) {
+  public Multi<Message> consume(Source source) {
     kafkaConsumer.subscribeAndAwait(source.getName());
+    
     return kafkaConsumer.toMulti()
         .map(record -> indexRecord(record, source));
   }
@@ -49,28 +49,25 @@ public class KafkaAdapter implements IndexingAdapter {
     HeaderExtractor headerExtractor = new HeaderExtractor(record.headers());
 
     return Message.builder()
-        .id(UUID.randomUUID().toString())
+        .id(UUID.randomUUID())
         .sourceId(source.getId())
         .offset(headerExtractor.getOffset())
         .partition(headerExtractor.getPartition())
         .payload(record.value())
         .payloadString(new String(record.value()))
-        .metaDataList(parseMetaDataFromHeaders(headerExtractor.getNonMatchedHeaders()))
+        .metadataList(parseMetaDataFromHeaders(headerExtractor.getNonMatchedHeaders()))
         .build();
   }
 
-  private List<MetaData> parseMetaDataFromHeaders(Map<String, String> headers) {
+  private List<Metadata> parseMetaDataFromHeaders(Map<String, String> headers) {
     return headers.entrySet()
         .stream()
-        .map(entry -> MetaData.builder()
+        .map(entry -> Metadata.builder()
+            .id(UUID.randomUUID())
             .type(MetaDataType.HEADER)
             .key(entry.getKey())
             .value(entry.getValue())
             .build())
         .collect(Collectors.toList());
-  }
-
-  private List<MetaData> parseMetaData(List<KafkaHeader> headers) {
-    return null;
   }
 }

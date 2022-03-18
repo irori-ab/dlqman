@@ -28,7 +28,8 @@ public class Process {
 
   @JsonIgnore
   private final Multi<Message> consumeSource;
-  private final Function<Message, Multi<Message>> persistFunction;
+  private final Function<Message, Multi<UUID>> persistFunction;
+  private final Repository repository;
   private final Source source;
 
   /**
@@ -42,7 +43,7 @@ public class Process {
   public static Process create(
       @NotNull Source source,
       @NotNull Multi<Message> consume,
-      @NotNull Function<Message, Multi<Message>> persistFunction) {
+      @NotNull Function<Message, Multi<UUID>> persistFunction) {
     return Process.builder()
         .id(UUID.randomUUID())
         .source(source)
