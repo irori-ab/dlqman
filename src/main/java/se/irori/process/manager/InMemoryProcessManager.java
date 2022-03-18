@@ -48,7 +48,7 @@ public class InMemoryProcessManager implements ProcessManager {
             .runSubscriptionOn(managedExecutor)
             .subscribe()
             .with(
-                message -> handleOnItemEvent(message, process),
+                messageId -> handleOnItemEvent(messageId, process),
                 t -> handleOnFailureEvent(t, process),
                 () -> handleOnCompletedEvent(process));
 
@@ -81,9 +81,9 @@ public class InMemoryProcessManager implements ProcessManager {
     }
   }
 
-  private void handleOnItemEvent(Message message, Process process) {
+  private void handleOnItemEvent(UUID messageId, Process process) {
     process.getProcessedMessages().getAndIncrement();
-    log.info("Received message with id [{}]", message.getId());
+    log.info("Received message with id [{}]", messageId);
   }
 
   private void handleOnFailureEvent(Throwable t, Process process) {
