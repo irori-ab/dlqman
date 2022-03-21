@@ -16,7 +16,7 @@ import org.eclipse.microprofile.reactive.messaging.Outgoing;
 @Slf4j
 public class TestRecordProducer {
 
-  //@Outgoing("test-topic")
+  @Outgoing("test-topic")
   public Multi<Message<String>> generateSpringCloudTestRecords() {
     Random random = new Random();
     return Multi.createFrom().ticks().every(Duration.ofMillis(10))

@@ -11,7 +11,6 @@ import se.irori.indexing.adapter.configuration.SourceConfiguration;
 import se.irori.indexing.adapter.kafka.KafkaAdapter;
 import se.irori.model.Process;
 import se.irori.model.Source;
-import se.irori.persistence.MessageRepository;
 import se.irori.process.manager.ProcessManager;
 
 /**
@@ -27,9 +26,6 @@ public class ConfigurationProcessInitializer {
   @Inject
   ProcessManager processManager;
 
-  @Inject
-  MessageRepository messageRepository;
-
   void onApplicationStart(@Observes StartupEvent startupEvent) {
     log.info("Starting configured persistence processes:");
     sourceConfiguration.kafka()
@@ -44,8 +40,7 @@ public class ConfigurationProcessInitializer {
             processManager.registerProcess(
                 Process.create(
                     source,
-                    adapter,
-                    messageRepository));
+                    adapter));
           });
         });
   }

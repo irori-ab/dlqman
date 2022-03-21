@@ -5,6 +5,8 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.subscription.Cancellable;
+import io.smallrye.mutiny.subscription.MultiSubscriber;
+import io.vertx.mutiny.core.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,27 +32,30 @@ public class InMemoryProcessManager implements ProcessManager {
   @Inject
   ManagedExecutor managedExecutor;
 
+  @Inject
+  EventBus eventBus;
+
   void onApplicationTermination(@Observes ShutdownEvent shutdownEvent) {
     log.info("Received shutdown event, starting cancelation of processes");
     processMap.keySet()
         .forEach(this::cancelProcess);
   }
 
+  /**
+   * Register a process consuming a source and sending a message in the `message-stream` event bus.
+   *
+   * @param process to start.
+   */
   @Override
   public void registerProcess(Process process) {
     log.info("Registering & starting process with id [{}], with source id [{}]",
         process.getId(), process.getSource().getId());
     Cancellable callback =
         process.consume()
-            .flatMap(message -> {
-              log.info("registerProcess [{}]", message.getId());
-              return process.persist(message).toMulti();
-            })
-            //TODO should we manage the execution threads more precisely?
-            // Risk is that we run out of threads?
-            // https://smallrye.io/smallrye-mutiny/guides/emit-subscription
-            // We could also skip specifying executor, and let Quarkus decide.
-            .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+            .flatMap(message ->
+                eventBus.<UUID>request("message-stream", message)
+                    .map(io.vertx.mutiny.core.eventbus.Message::body)
+                    .toMulti())
             .subscribe()
             .with(
                 messageId -> handleOnItemEvent(messageId, process),

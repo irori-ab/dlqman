@@ -3,7 +3,6 @@ package se.irori.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.Cancellable;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,7 +32,6 @@ public class Process {
   private final IndexingAdapter indexingAdapter;
 
   @JsonIgnore
-  private final Repository repository;
   private final Source source;
 
   /**
@@ -44,13 +42,11 @@ public class Process {
    */
   public static Process create(
       @NotNull Source source,
-      @NotNull IndexingAdapter indexingAdapter,
-      @NotNull Repository repository) {
+      @NotNull IndexingAdapter indexingAdapter) {
     return Process.builder()
         .id(UUID.randomUUID())
         .source(source)
         .indexingAdapter(indexingAdapter)
-        .repository(repository)
         .processState(ProcessState.CREATED)
         .build();
   }
@@ -65,10 +61,5 @@ public class Process {
 
   public Multi<Message> consume() {
     return indexingAdapter.consume(source);
-  }
-
-  public Uni<UUID> persist(Message message) {
-    log.info("Persisting message with id [{}]", message.getId());
-    return repository.persist(message);
   }
 }
