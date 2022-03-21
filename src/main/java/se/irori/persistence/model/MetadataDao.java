@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import se.irori.model.MetaDataType;
+import se.irori.model.Metadata;
 
 @Builder
 @Data
@@ -28,4 +29,13 @@ public class MetadataDao {
 
   @ManyToOne
   MessageDao message;
+
+  public static MetadataDao from(Metadata metadata) {
+    return MetadataDao.builder()
+        .id(metadata.getId())
+        .type(metadata.getType())
+        .key(metadata.getKey())
+        .value(metadata.getValue())
+        .build();
+  }
 }

@@ -1,6 +1,4 @@
 quarkus:
-  #log:
-  #  level: DEBUG
   kafka:
     devservices:
       port: 9992

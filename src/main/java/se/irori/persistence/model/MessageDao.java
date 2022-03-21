@@ -1,11 +1,17 @@
 package se.irori.persistence.model;
 
+import static javax.persistence.CascadeType.ALL;
+
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.common.constraint.NotNull;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +22,7 @@ import se.irori.model.Message;
 @Getter
 @Builder
 @Entity
-@Table(name="message")
+@Table(name = "message")
 @NoArgsConstructor
 @AllArgsConstructor
 public class MessageDao extends PanacheEntityBase {
@@ -35,8 +41,8 @@ public class MessageDao extends PanacheEntityBase {
   private String payloadString;
   private String classification;
 
-  //@OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.LAZY)
-  //private List<MetadataDao> metadataList;
+  @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
+  private List<MetadataDao> metadataList;
 
   public static MessageDao from(Message message) {
     return MessageDao.builder()
@@ -47,6 +53,10 @@ public class MessageDao extends PanacheEntityBase {
         .payload(message.getPayload())
         .payloadString(message.getPayloadString())
         .classification(message.getClassification())
+        .metadataList(message.getMetadataList()
+            .stream()
+            .map(MetadataDao::from)
+            .collect(Collectors.toList()))
         .build();
   }
 
