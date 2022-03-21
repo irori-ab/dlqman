@@ -28,7 +28,7 @@ public class Message {
   private UUID id;
 
   @NotNull
-  private String sourceId;
+  private UUID sourceId;
   private Integer partition;
 
   @Column(name = "topic_offset")

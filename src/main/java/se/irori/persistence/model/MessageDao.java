@@ -1,23 +1,17 @@
 package se.irori.persistence.model;
 
-import static javax.persistence.CascadeType.ALL;
-
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.common.constraint.NotNull;
-import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import se.irori.model.Message;
-import se.irori.model.Metadata;
 
 @Getter
 @Builder
@@ -32,7 +26,7 @@ public class MessageDao extends PanacheEntityBase {
   private UUID id;
 
   @NotNull
-  private String sourceId;
+  private UUID sourceId;
   private Integer partition;
 
   @Column(name = "topic_offset")
@@ -41,8 +35,8 @@ public class MessageDao extends PanacheEntityBase {
   private String payloadString;
   private String classification;
 
-  @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
-  private List<Metadata> metadataList;
+  //@OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.LAZY)
+  //private List<MetadataDao> metadataList;
 
   public static MessageDao from(Message message) {
     return MessageDao.builder()

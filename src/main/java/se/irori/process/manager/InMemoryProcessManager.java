@@ -3,6 +3,7 @@ package se.irori.process.manager;
 import io.quarkus.runtime.ShutdownEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.subscription.Cancellable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import se.irori.model.Message;
 import se.irori.model.Process;
 import se.irori.model.ProcessState;
+import se.irori.model.Source;
 
 @Slf4j
 @ApplicationScoped
@@ -39,13 +41,16 @@ public class InMemoryProcessManager implements ProcessManager {
     log.info("Registering & starting process with id [{}], with source id [{}]",
         process.getId(), process.getSource().getId());
     Cancellable callback =
-        process.getConsumeSource()
-            .flatMap(process.getPersistFunction())
+        process.consume()
+            .flatMap(message -> {
+              log.info("registerProcess [{}]", message.getId());
+              return process.persist(message).toMulti();
+            })
             //TODO should we manage the execution threads more precisely?
             // Risk is that we run out of threads?
             // https://smallrye.io/smallrye-mutiny/guides/emit-subscription
             // We could also skip specifying executor, and let Quarkus decide.
-            .runSubscriptionOn(managedExecutor)
+            .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
             .subscribe()
             .with(
                 messageId -> handleOnItemEvent(messageId, process),
@@ -83,7 +88,7 @@ public class InMemoryProcessManager implements ProcessManager {
 
   private void handleOnItemEvent(UUID messageId, Process process) {
     process.getProcessedMessages().getAndIncrement();
-    log.info("Received message with id [{}]", messageId);
+    log.info("Finished process message with id [{}]", messageId);
   }
 
   private void handleOnFailureEvent(Throwable t, Process process) {

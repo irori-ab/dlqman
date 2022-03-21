@@ -7,23 +7,19 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Random;
-import javax.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.record.TimestampType;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 @Slf4j
-@ApplicationScoped
 public class TestRecordProducer {
 
-  @Outgoing("test-topic")
+  //@Outgoing("test-topic")
   public Multi<Message<String>> generateSpringCloudTestRecords() {
-    ConsumerRecord<Object, Object> record;
     Random random = new Random();
-    return Multi.createFrom().ticks().every(Duration.ofMillis(1000))
+    return Multi.createFrom().ticks().every(Duration.ofMillis(10))
         .map(x -> {
           log.info("Sending test record");
           return Message.of("payload")
