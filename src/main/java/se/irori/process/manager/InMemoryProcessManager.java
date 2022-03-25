@@ -56,6 +56,7 @@ public class InMemoryProcessManager implements ProcessManager {
                 eventBus.<UUID>request("message-stream", message)
                     .map(io.vertx.mutiny.core.eventbus.Message::body)
                     .toMulti())
+            .runSubscriptionOn(managedExecutor)
             .subscribe()
             .with(
                 messageId -> handleOnItemEvent(messageId, process),
@@ -93,7 +94,7 @@ public class InMemoryProcessManager implements ProcessManager {
 
   private void handleOnItemEvent(UUID messageId, Process process) {
     process.getProcessedMessages().getAndIncrement();
-    log.info("Finished process message with id [{}]", messageId);
+    log.debug("Finished process message with id [{}]", messageId);
   }
 
   private void handleOnFailureEvent(Throwable t, Process process) {

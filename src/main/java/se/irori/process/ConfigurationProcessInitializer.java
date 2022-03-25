@@ -6,9 +6,10 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import se.irori.indexing.adapter.IndexingAdapter;
+import org.eclipse.microprofile.context.ManagedExecutor;
+import se.irori.indexing.adapter.Indexer;
 import se.irori.indexing.adapter.configuration.SourceConfiguration;
-import se.irori.indexing.adapter.kafka.KafkaAdapter;
+import se.irori.indexing.adapter.kafka.KafkaIndexer;
 import se.irori.model.Process;
 import se.irori.model.Source;
 import se.irori.process.manager.ProcessManager;
@@ -30,7 +31,7 @@ public class ConfigurationProcessInitializer {
     log.info("Starting configured persistence processes:");
     sourceConfiguration.kafka()
         .forEach(kafkaSourceConfiguration -> {
-          IndexingAdapter adapter = new KafkaAdapter(kafkaSourceConfiguration);
+          Indexer adapter = new KafkaIndexer(kafkaSourceConfiguration);
           kafkaSourceConfiguration.topics().forEach(topic -> {
             Source source = Source.builder()
                 .id(UUID.randomUUID())

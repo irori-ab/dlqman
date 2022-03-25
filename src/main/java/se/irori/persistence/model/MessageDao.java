@@ -4,6 +4,8 @@ import static javax.persistence.CascadeType.ALL;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.common.constraint.NotNull;
+import io.smallrye.mutiny.Uni;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,6 +20,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import se.irori.model.Message;
+import se.irori.model.MessageStatus;
+import se.irori.model.TimestampType;
 
 @Getter
 @Builder
@@ -31,6 +35,11 @@ public class MessageDao extends PanacheEntityBase {
   @NotNull
   private UUID id;
 
+  private LocalDateTime timeStamp;
+  private TimestampType timeStampType;
+
+  private LocalDateTime indexTime;
+
   @NotNull
   private UUID sourceId;
   private Integer partition;
@@ -39,20 +48,34 @@ public class MessageDao extends PanacheEntityBase {
   private Long offset;
   private byte[] payload;
   private String payloadString;
-  private String classification;
+  private MessageStatus messageStatus;
 
-  @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
+  @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.LAZY)
   private List<MetadataDao> metadataList;
+
+  public static Uni<List<MessageDao>> listMessages(
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      UUID sourceId) {
+    if(startTime != null & endTime != null) {
+      return MessageDao.<MessageDao>find("indexTime < ?1 and indexTime > ?2", startTime, endTime)
+          .list();
+    }
+    return MessageDao.<MessageDao>find("sourceId = ?1", sourceId).list();
+  }
 
   public static MessageDao from(Message message) {
     return MessageDao.builder()
         .id(message.getId())
+        .timeStamp(message.getTimeStamp())
+        .timeStampType(message.getTimeStampType())
+        .indexTime(message.getIndexTime())
         .sourceId(message.getSourceId())
         .partition(message.getPartition())
         .offset(message.getOffset())
         .payload(message.getPayload())
         .payloadString(message.getPayloadString())
-        .classification(message.getClassification())
+        .messageStatus(message.getStatus())
         .metadataList(message.getMetadataList()
             .stream()
             .map(MetadataDao::from)
@@ -64,12 +87,15 @@ public class MessageDao extends PanacheEntityBase {
   public Message toMessage() {
     return Message.builder()
         .id(getId())
+        .timeStamp(getTimeStamp())
+        .timeStampType(getTimeStampType())
+        .indexTime(getIndexTime())
         .sourceId(getSourceId())
         .partition(getPartition())
         .offset(getOffset())
         .payload(getPayload())
         .payloadString(getPayloadString())
-        .classification(getClassification())
+        .status(getMessageStatus())
         .build();
   }
 }

@@ -2,16 +2,14 @@ package se.irori.model;
 
 import static javax.persistence.CascadeType.ALL;
 
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.common.constraint.NotNull;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +25,10 @@ public class Message {
   @NotNull
   private UUID id;
 
+  private LocalDateTime timeStamp;
+  private TimestampType timeStampType;
+
+  private LocalDateTime indexTime;
   @NotNull
   private UUID sourceId;
   private Integer partition;
@@ -35,7 +37,7 @@ public class Message {
   private Long offset;
   private byte[] payload;
   private String payloadString;
-  private String classification;
+  private MessageStatus status;
 
   @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
   private List<Metadata> metadataList;
