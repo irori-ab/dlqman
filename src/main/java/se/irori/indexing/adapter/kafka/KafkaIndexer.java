@@ -13,10 +13,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes.BytesSerde;
-import org.eclipse.microprofile.context.ManagedExecutor;
 import se.irori.indexing.adapter.Indexer;
 import se.irori.indexing.adapter.configuration.SourceConfiguration.KafkaSourceConfiguration;
 import se.irori.model.Message;
+import se.irori.model.MessageStatus;
 import se.irori.model.MetaDataType;
 import se.irori.model.Metadata;
 import se.irori.model.Source;
@@ -65,6 +65,7 @@ public class KafkaIndexer implements Indexer {
         .payload(record.value())
         .payloadString(new String(record.value()))
         .metadataList(parseMetaDataFromHeaders(headerExtractor.getNonMatchedHeaders()))
+        .status(MessageStatus.UNHANDLED)
         .build();
   }
 

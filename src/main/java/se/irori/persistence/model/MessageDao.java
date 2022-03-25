@@ -4,7 +4,6 @@ import static javax.persistence.CascadeType.ALL;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.common.constraint.NotNull;
-import io.smallrye.mutiny.Uni;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -53,17 +52,6 @@ public class MessageDao extends PanacheEntityBase {
   @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.LAZY)
   private List<MetadataDao> metadataList;
 
-  public static Uni<List<MessageDao>> listMessages(
-      LocalDateTime startTime,
-      LocalDateTime endTime,
-      UUID sourceId) {
-    if(startTime != null & endTime != null) {
-      return MessageDao.<MessageDao>find("indexTime < ?1 and indexTime > ?2", startTime, endTime)
-          .list();
-    }
-    return MessageDao.<MessageDao>find("sourceId = ?1", sourceId).list();
-  }
-
   public static MessageDao from(Message message) {
     return MessageDao.builder()
         .id(message.getId())
@@ -96,6 +84,11 @@ public class MessageDao extends PanacheEntityBase {
         .payload(getPayload())
         .payloadString(getPayloadString())
         .status(getMessageStatus())
+        .metadataList(
+            getMetadataList()
+                .stream()
+                .map(MetadataDao::toMessage)
+                .collect(Collectors.toList()))
         .build();
   }
 }

@@ -29,16 +29,15 @@ public class Message {
   private TimestampType timeStampType;
 
   private LocalDateTime indexTime;
+
   @NotNull
   private UUID sourceId;
   private Integer partition;
 
-  @Column(name = "topic_offset")
   private Long offset;
   private byte[] payload;
   private String payloadString;
   private MessageStatus status;
 
-  @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
   private List<Metadata> metadataList;
 }
