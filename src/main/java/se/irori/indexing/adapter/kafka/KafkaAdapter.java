@@ -45,7 +45,7 @@ public class KafkaAdapter implements IndexingAdapter {
   }
 
   private Message indexRecord(KafkaConsumerRecord<byte[], byte[]> record, Source source) {
-    log.debug("Indexing record with key [{}] & value [{}]", record.key(), record.value());
+    log.info("Indexing record with key [{}] & value [{}]", record.key(), record.value());
     HeaderExtractor headerExtractor = new HeaderExtractor(record.headers());
 
     return Message.builder()

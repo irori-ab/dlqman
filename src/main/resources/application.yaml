@@ -1,16 +1,10 @@
 quarkus:
-  http:
-    port: 8888
-  #log:
-  #  level: DEBUG
   kafka:
     devservices:
       port: 9992
   hibernate-orm:
     database:
       generation: drop-and-create
-    #log:
-    #  sql: true
   datasource:
     db-kind: postgresql
 source:

@@ -3,7 +3,10 @@ package se.irori.process.manager;
 import io.quarkus.runtime.ShutdownEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.subscription.Cancellable;
+import io.smallrye.mutiny.subscription.MultiSubscriber;
+import io.vertx.mutiny.core.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +21,7 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import se.irori.model.Message;
 import se.irori.model.Process;
 import se.irori.model.ProcessState;
+import se.irori.model.Source;
 
 @Slf4j
 @ApplicationScoped
@@ -28,24 +32,30 @@ public class InMemoryProcessManager implements ProcessManager {
   @Inject
   ManagedExecutor managedExecutor;
 
+  @Inject
+  EventBus eventBus;
+
   void onApplicationTermination(@Observes ShutdownEvent shutdownEvent) {
     log.info("Received shutdown event, starting cancelation of processes");
     processMap.keySet()
         .forEach(this::cancelProcess);
   }
 
+  /**
+   * Register a process consuming a source and sending a message in the `message-stream` event bus.
+   *
+   * @param process to start.
+   */
   @Override
   public void registerProcess(Process process) {
     log.info("Registering & starting process with id [{}], with source id [{}]",
         process.getId(), process.getSource().getId());
     Cancellable callback =
-        process.getConsumeSource()
-            .flatMap(process.getPersistFunction())
-            //TODO should we manage the execution threads more precisely?
-            // Risk is that we run out of threads?
-            // https://smallrye.io/smallrye-mutiny/guides/emit-subscription
-            // We could also skip specifying executor, and let Quarkus decide.
-            .runSubscriptionOn(managedExecutor)
+        process.consume()
+            .flatMap(message ->
+                eventBus.<UUID>request("message-stream", message)
+                    .map(io.vertx.mutiny.core.eventbus.Message::body)
+                    .toMulti())
             .subscribe()
             .with(
                 messageId -> handleOnItemEvent(messageId, process),
@@ -83,7 +93,7 @@ public class InMemoryProcessManager implements ProcessManager {
 
   private void handleOnItemEvent(UUID messageId, Process process) {
     process.getProcessedMessages().getAndIncrement();
-    log.info("Received message with id [{}]", messageId);
+    log.info("Finished process message with id [{}]", messageId);
   }
 
   private void handleOnFailureEvent(Throwable t, Process process) {
