@@ -10,7 +10,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import se.irori.indexing.adapter.IndexingAdapter;
+import se.irori.indexing.adapter.Indexer;
 
 /**
  * Entity defining a source -> sink process and it´s lifecycle.
@@ -29,7 +29,7 @@ public class Process {
   private final AtomicInteger processedMessages = new AtomicInteger();
 
   @JsonIgnore
-  private final IndexingAdapter indexingAdapter;
+  private final Indexer indexer;
 
   @JsonIgnore
   private final Source source;
@@ -42,11 +42,11 @@ public class Process {
    */
   public static Process create(
       @NotNull Source source,
-      @NotNull IndexingAdapter indexingAdapter) {
+      @NotNull Indexer indexer) {
     return Process.builder()
         .id(UUID.randomUUID())
         .source(source)
-        .indexingAdapter(indexingAdapter)
+        .indexer(indexer)
         .processState(ProcessState.CREATED)
         .build();
   }
@@ -60,6 +60,6 @@ public class Process {
   }
 
   public Multi<Message> consume() {
-    return indexingAdapter.consume(source);
+    return indexer.consume(source);
   }
 }

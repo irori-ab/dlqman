@@ -4,6 +4,6 @@ import io.smallrye.mutiny.Multi;
 import se.irori.model.Message;
 import se.irori.model.Source;
 
-public interface IndexingAdapter {
+public interface Indexer {
   Multi<Message> consume(Source source);
 }

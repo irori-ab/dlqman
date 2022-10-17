@@ -38,4 +38,13 @@ public class MetadataDao {
         .value(metadata.getValue())
         .build();
   }
+
+  public Metadata toMessage() {
+    return Metadata.builder()
+        .id(getId())
+        .type(getType())
+        .key(getKey())
+        .value(getValue())
+        .build();
+  }
 }

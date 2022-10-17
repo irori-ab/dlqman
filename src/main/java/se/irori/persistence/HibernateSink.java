@@ -11,7 +11,7 @@ import se.irori.persistence.model.MessageDao;
 @Slf4j
 @ApplicationScoped
 public class HibernateSink implements Sink {
-  
+
   @ConsumeEvent("message-stream")
   public Uni<UUID> persist(Message message) {
     log.debug("Persisting message with id [{}]", message.getId());

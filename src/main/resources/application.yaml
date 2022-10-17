@@ -5,8 +5,14 @@ quarkus:
   hibernate-orm:
     database:
       generation: drop-and-create
+    log:
+      sql: true
   datasource:
     db-kind: postgresql
+    reactive:
+      #Nåt konstigt med DB poolen med graphql? Även med ganska långsam sinking (4 records i sekunden) så får vi slut connections.
+      max-size: 100
+
 source:
   kafka:
     - bootstrap-servers: localhost:9992
