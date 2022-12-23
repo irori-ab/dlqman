@@ -1,21 +1,19 @@
 package se.irori.model;
 
-import static javax.persistence.CascadeType.ALL;
-
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.common.constraint.NotNull;
-import java.util.List;
-import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.persistence.Column;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import java.util.List;
+import java.util.UUID;
+
+import static javax.persistence.CascadeType.ALL;
 
 @Data
 @Builder
@@ -27,15 +25,17 @@ public class Message {
   @NotNull
   private UUID id;
 
-  @NotNull
-  private UUID sourceId;
-  private Integer partition;
-
+  private String sourceId;
+  private String sourceTopic;
+  private Integer sourcePartition;
   @Column(name = "topic_offset")
-  private Long offset;
-  private byte[] payload;
-  private String payloadString;
-  private String classification;
+  private Long sourceOffset;
+
+  private String fingerprint;
+
+  private MessageStatus status;
+  private String matchedRule;
+
 
   @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
   private List<Metadata> metadataList;

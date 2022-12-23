@@ -7,6 +7,10 @@ quarkus:
       generation: drop-and-create
   datasource:
     db-kind: postgresql
+
+sources:
+  - name: test-source
+
 source:
   kafka:
     - bootstrap-servers: localhost:9992

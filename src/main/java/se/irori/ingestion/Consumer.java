@@ -1,9 +1,9 @@
-package se.irori.indexing.adapter;
+package se.irori.ingestion;
 
 import io.smallrye.mutiny.Multi;
+import se.irori.config.Source;
 import se.irori.model.Message;
-import se.irori.model.Source;
 
-public interface IndexingAdapter {
+public interface Consumer {
   Multi<Message> consume(Source source);
 }
