@@ -1,8 +1,10 @@
 package se.irori.ingestion;
 
+import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import lombok.extern.slf4j.Slf4j;
 import se.irori.config.AppConfiguration;
+import se.irori.config.matchers.MatcherHolder;
 import se.irori.ingestion.kafka.KafkaConsumer;
 import se.irori.ingestion.manager.IngesterManager;
 
@@ -17,28 +19,39 @@ import java.util.Map;
  */
 @ApplicationScoped
 @Slf4j
-public class IngesterInitializer {
+public class IngesterHandler {
 
   @Inject
-  AppConfiguration sourceConfiguration;
+  AppConfiguration config;
 
   @Inject
   IngesterManager ingesterManager;
 
+  @Inject
+  MatcherHolder matcherHolder;
+
   void onApplicationStart(@Observes StartupEvent startupEvent) {
     log.info("Starting configured persistence processes:");
-    sourceConfiguration.sources()
-        .forEach(sc -> {
+    config.sources()
+        .forEach(source -> {
           Map<String, String> consumerProperties = new HashMap<>();
-          consumerProperties.putAll(sourceConfiguration.kafka().consumer());
-          consumerProperties.putAll(sc.getConsumerPropertiesOverrides());
+          consumerProperties.putAll(config.kafka().common());
+          consumerProperties.putAll(config.kafka().consumer());
+          consumerProperties.putAll(source.consumerPropertiesOverrides());
 
           Consumer consumer = new KafkaConsumer(consumerProperties);
 
           ingesterManager.registerIngester(
               Ingester.create(
-                  sc,
-                  consumer));
+                  source,
+                  consumer,
+                  matcherHolder));
         });
+  }
+
+  void onShutdown(@Observes ShutdownEvent shutdownEvent) {
+    for (Ingester ing : ingesterManager.listIngester()) {
+      ingesterManager.cancelIngester(ing.getId());
+    }
   }
 }

@@ -1,9 +1,10 @@
 package se.irori.config.dlqstrategy;
 
-import java.time.Duration;
 
 public interface ResendDLQStrategy extends DLQStrategy {
+  String CONFIG_DURATION = "nextWaitDuration";
+  String CONFIG_MAX_RETRIES = "maxTries";
   boolean isFingerprinted();
   boolean maxTriesExceeded(int noTries);
-  Duration nextWaitDuration(Duration duration);
+  Long nextWaitDuration(Long durationMillis);
 }

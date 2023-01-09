@@ -1,12 +1,13 @@
 package se.irori.config;
 
-import se.irori.config.dlqstrategy.DLQStrategy;
-import se.irori.config.matchers.Matcher;
+import java.util.Optional;
 
-public class Rule {
-  private String name;
-  private int priority;
-  private Matcher matcher;
-  private DLQStrategy strategy;
-  private String resendTopicOverride;
+public interface Rule {
+  String name();
+  int priority();
+  String matcher();
+  String strategy();
+
+  Optional<String> resendTopicOverride();
+
 }

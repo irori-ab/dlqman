@@ -1,13 +1,14 @@
 package se.irori.persistence;
 
 import io.smallrye.mutiny.Uni;
-import java.util.UUID;
 import se.irori.model.Message;
+
+import java.util.UUID;
 
 /**
  * Interface defining how a message is persisted or sourced.
  */
-public interface Sink {
+public interface Scheduler {
 
   /**
    * Function taking a {@link Message} as input and Multi as result

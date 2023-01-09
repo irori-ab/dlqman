@@ -1,12 +1,10 @@
 package se.irori.config.dlqstrategy;
 
-import java.time.Duration;
-
 public class SimpleResendDLQStrategy implements ResendDLQStrategy {
-  private final Duration waitDuration;
+  private final Long waitDuration;
 
-  public SimpleResendDLQStrategy(Duration waitDuration) {
-    this.waitDuration = waitDuration;
+  public SimpleResendDLQStrategy(Long waitDurationMillis) {
+    this.waitDuration = waitDurationMillis;
   }
 
   @Override
@@ -20,7 +18,7 @@ public class SimpleResendDLQStrategy implements ResendDLQStrategy {
   }
 
   @Override
-  public Duration nextWaitDuration(Duration duration) {
+  public Long nextWaitDuration(Long duration) {
     return waitDuration;
   }
 }

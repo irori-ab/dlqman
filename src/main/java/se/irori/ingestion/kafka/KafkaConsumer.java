@@ -20,14 +20,6 @@ public class KafkaConsumer implements Consumer {
   io.vertx.mutiny.kafka.client.consumer.KafkaConsumer<byte[], byte[]> kafkaConsumer;
 
   public KafkaConsumer(Map<String, String> consumerConfig) {
-//    Map<String, String> consumerConfiguration = Map.of(
-//        "bootstrap.servers", configuration.bootstrapServers(),
-//        "key.deserializer", new BytesSerde().deserializer().getClass().getName(),
-//        "value.deserializer", new BytesSerde().serializer().getClass().getName(),
-//        "group.id", configuration.groupId(),
-//        "auto.offset.reset", "earliest",
-//        "enable.auto.commit", "false");
-
     this.kafkaConsumer = io.vertx.mutiny.kafka.client.consumer.KafkaConsumer.create(
         Vertx.vertx(),
         consumerConfig,
@@ -35,22 +27,31 @@ public class KafkaConsumer implements Consumer {
   }
 
   public Multi<Message> consume(Source source) {
-    kafkaConsumer.subscribeAndAwait(source.getSourceTopic());
+    kafkaConsumer.subscribeAndAwait(source.sourceTopic());
+    kafkaConsumer.partitionsForAndAwait(source.sourceTopic()).stream()
+      .forEach(pi -> log.info("Subscribed to partition {}:{}", pi.getTopic(), pi.getPartition()));
 
     return kafkaConsumer.toMulti()
         .map(record -> mapRecord(record, source));
   }
 
+
+  @Override
+  public void closeConsumer() {
+    this.kafkaConsumer.closeAndAwait();
+  }
+
   private Message mapRecord(KafkaConsumerRecord<byte[], byte[]> record, Source source) {
-    log.info("Indexing record with key [{}] & value [{}]", record.key(), record.value());
+    log.debug("Indexing record from TPO[{}:{}:{}]", record.topic(), record.partition(), record.offset());
     HeaderExtractor headerExtractor = new HeaderExtractor(record.headers());
 
     return Message.builder()
         .id(UUID.randomUUID())
-        .sourceId(source.getName())
+        .sourceId(source.name())
         .sourceOffset(record.offset())
         .sourcePartition(record.partition())
         .sourceTopic(record.topic())
+        .destinationTopic(source.resendTopic())
         .metadataList(parseMetaDataFromHeaders(headerExtractor.getNonMatchedHeaders()))
         .build();
   }

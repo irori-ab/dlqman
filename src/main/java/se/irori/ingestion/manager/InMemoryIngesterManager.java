@@ -40,7 +40,7 @@ public class InMemoryIngesterManager implements IngesterManager {
   @Override
   public void registerIngester(Ingester ingester) {
     log.info("Registering & starting process with id [{}], with source id [{}]",
-        ingester.getId(), ingester.getSource().getName());
+        ingester.getId(), ingester.getSource().name());
     Cancellable callback =
         ingester.consume()
             .flatMap(message ->
@@ -48,8 +48,7 @@ public class InMemoryIngesterManager implements IngesterManager {
                     .map(io.vertx.mutiny.core.eventbus.Message::body)
                     .toMulti())
             .subscribe()
-            .with(
-                messageId -> handleOnItemEvent(messageId, ingester),
+            .with(messageId -> handleOnItemEvent(messageId, ingester),
                 t -> handleOnFailureEvent(t, ingester),
                 () -> handleOnCompletedEvent(ingester));
 
@@ -75,7 +74,10 @@ public class InMemoryIngesterManager implements IngesterManager {
     try {
       log.info("Shutting down ingester with id [{}]", ingester.getId());
       ingester.changeIngesterState(IngesterState.CANCELLED);
-      managedExecutor.runAsync(() -> ingester.getCallback().cancel())
+      managedExecutor.runAsync(() -> {
+        ingester.getCallback().cancel();
+        ingester.getConsumer().closeConsumer();
+        })
           .get();
     } catch (InterruptedException | ExecutionException e) {
       log.error("Ungraceful shutdown of ingester with id [{}]", ingester.getId(), e);

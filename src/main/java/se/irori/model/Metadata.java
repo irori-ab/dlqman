@@ -26,4 +26,6 @@ public class Metadata {
   private MetaDataType type = MetaDataType.SOURCE_HEADER;
   private String key;
   private String value;
+
+  private Message message;
 }

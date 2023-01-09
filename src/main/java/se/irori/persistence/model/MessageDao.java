@@ -2,14 +2,12 @@ package se.irori.persistence.model;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.common.constraint.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import se.irori.model.Message;
 import se.irori.model.MessageStatus;
 
 import javax.persistence.*;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -17,31 +15,39 @@ import java.util.stream.Collectors;
 import static javax.persistence.CascadeType.ALL;
 
 @Getter
+@Setter
 @Builder
-@Entity
-@Table(name = "message")
+@Entity(name = "MessageDao")
+@Table(name = "MESSAGE")
 @NoArgsConstructor
 @AllArgsConstructor
 public class MessageDao extends PanacheEntityBase {
 
   @Id
   @NotNull
-  private UUID id;
+  public UUID id;
 
   private String sourceId;
   private String sourceTopic;
   private Integer sourcePartition;
-  @Column(name = "topic_offset")
+
   private Long sourceOffset;
 
   private String fingerprint;
 
+  private String destinationTopic;
+
+  @Enumerated(EnumType.STRING)
   private MessageStatus status;
   private String matchedRule;
 
+  private OffsetDateTime processAt;
+
+  private Long waitTime;
+
 
   @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
-  private List<MetadataDao> metadataList;
+  public List<MetadataDao> metadataList;
 
   public static MessageDao from(Message message) {
     return MessageDao.builder()
@@ -49,8 +55,11 @@ public class MessageDao extends PanacheEntityBase {
         .sourceId(message.getSourceId())
         .sourcePartition(message.getSourcePartition())
         .sourceOffset(message.getSourceOffset())
+        .sourceTopic(message.getSourceTopic())
+        .destinationTopic(message.getDestinationTopic())
         .fingerprint(message.getFingerprint())
-        .matchedRule(message.getMatchedRule())
+        .status(message.getStatus())
+        .matchedRule(message.getMatchedRule() != null ? message.getMatchedRule().name() : null)
         .metadataList(message.getMetadataList()
             .stream()
             .map(MetadataDao::from)
@@ -66,7 +75,7 @@ public class MessageDao extends PanacheEntityBase {
         .sourcePartition(getSourcePartition())
         .sourceOffset(getSourceOffset())
         .fingerprint(getFingerprint())
-        .matchedRule(getMatchedRule())
+        //.matchedRule(getMatchedRule())
         .metadataList(getMetadataList()
           .stream()
           .map(MetadataDao::to)

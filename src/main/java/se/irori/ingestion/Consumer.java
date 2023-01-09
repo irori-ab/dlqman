@@ -6,4 +6,6 @@ import se.irori.model.Message;
 
 public interface Consumer {
   Multi<Message> consume(Source source);
+
+  void closeConsumer();
 }

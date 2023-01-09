@@ -7,19 +7,23 @@ import se.irori.model.Metadata;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-
+/**
+ *
+ */
 public class HeaderRegexMatcher implements Matcher {
+  public static final String CONFIG_HEADER_NAME = "headerName";
+  public static final String CONFIG_REGEX_PATTERN = "regexPattern";
   String headerName;
   Pattern regex;
 
   /**
-   * Matches a message if the specified header matches the patern.
-   * @param headerName
-   * @param regexPattern
+   * Matches a message if the specified header matches the regex pattern.
+   * @param headerName The name of the message header to be matched.
+   * @param regex The regex pattern in string format used for matching.
    */
-  public HeaderRegexMatcher(String headerName, String regexPattern) {
+  public HeaderRegexMatcher(String headerName, String regex) {
     this.headerName = headerName;
-    this.regex = Pattern.compile(regexPattern);
+    this.regex = Pattern.compile(regex);
   }
 
   @Override
@@ -33,4 +37,5 @@ public class HeaderRegexMatcher implements Matcher {
     }
     return false;
   }
+
 }

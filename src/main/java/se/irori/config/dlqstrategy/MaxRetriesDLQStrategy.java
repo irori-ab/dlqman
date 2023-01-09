@@ -1,13 +1,11 @@
 package se.irori.config.dlqstrategy;
 
-import java.time.Duration;
-
 public class MaxRetriesDLQStrategy implements ResendDLQStrategy {
-  private final Duration waitDuration;
+  private final Long waitDuration;
   private final int maxTries;
 
-  public MaxRetriesDLQStrategy(Duration waitDuration, int maxTries) {
-    this.waitDuration = waitDuration;
+  public MaxRetriesDLQStrategy(Long waitDurationMillis, int maxTries) {
+    this.waitDuration = waitDurationMillis;
     this.maxTries = maxTries;
   }
 
@@ -22,7 +20,7 @@ public class MaxRetriesDLQStrategy implements ResendDLQStrategy {
   }
 
   @Override
-  public Duration nextWaitDuration(Duration duration) {
+  public Long nextWaitDuration(Long duration) {
     return waitDuration;
   }
 }

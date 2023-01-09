@@ -8,28 +8,25 @@ import lombok.NoArgsConstructor;
 import se.irori.model.MetaDataType;
 import se.irori.model.Metadata;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
+@Entity(name = "MetadataDao")
 @Table(name="METADATA")
 public class MetadataDao extends PanacheEntityBase {
 
   @Id
-  private UUID id;
+  public UUID id;
   private MetaDataType type;
   private String key;
   private String value;
 
-  @ManyToOne
-  MessageDao message;
+  @ManyToOne(fetch = FetchType.LAZY, targetEntity = MessageDao.class)
+  public MessageDao message;
 
   public static MetadataDao from(Metadata metadata) {
     return MetadataDao.builder()

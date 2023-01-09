@@ -1,19 +1,15 @@
 package se.irori.config;
 
-import lombok.Builder;
-import lombok.Getter;
-
+import java.util.List;
 import java.util.Map;
 
-@Builder
-@Getter
-public class Source {
-  private String name;
-  private String description;
-  private String sourceTopic;
-  private String resendTopic;
+public interface Source {
+  String name();
+  String description();
+  String sourceTopic();
+  String resendTopic();
 
-  private Rule[] matchRules;
+  List<Rule> matchRules();
 
-  private Map<String, String> consumerPropertiesOverrides;
+  Map<String, String> consumerPropertiesOverrides();
 }

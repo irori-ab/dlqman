@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.record.TimestampType;
 import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -17,7 +16,7 @@ import java.util.Random;
 @Slf4j
 public class TestRecordProducer {
 
-  @Outgoing("test-topic")
+  //@Outgoing("test-topic")
   public Multi<Message<String>> generateSpringCloudTestRecords() {
     Random random = new Random();
     return Multi.createFrom().ticks().every(Duration.ofMillis(10))
