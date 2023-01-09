@@ -15,7 +15,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.UUID;
 
 /**
  * Receives messages on internal bus and persists them.
@@ -28,12 +27,13 @@ public class DatabaseScheduler implements Scheduler {
   StrategyHolder strategyHolder;
 
   @ConsumeEvent("message-stream")
-  public Uni<UUID> persist(Message message) {
-    log.debug("Persisting message with id [{}]", message.getId());
+  public Uni<String> persist(Message message) {
+    log.debug("Persisting message with TPO [{}:{}:{}]", message.getSourceTopic(), message.getSourcePartition(),
+      message.getSourceOffset());
     Rule rule = message.getMatchedRule();
     return applyStrategy(MessageDao.from(message), rule)
         .<MessageDao>persistAndFlush()
-        .map(MessageDao::getId);
+        .map(MessageDao::getIdentifier);
   }
 
   private MessageDao applyStrategy(MessageDao message, Rule rule) {

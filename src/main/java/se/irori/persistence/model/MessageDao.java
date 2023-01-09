@@ -82,4 +82,8 @@ public class MessageDao extends PanacheEntityBase {
           .collect(Collectors.toList()))
           .build();
   }
+
+  public String getIdentifier() {
+    return String.format("%s:%s:%s", getSourceTopic(), getSourcePartition(), getSourceOffset());
+  }
 }
