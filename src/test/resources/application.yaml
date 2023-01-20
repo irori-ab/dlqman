@@ -1,13 +1,8 @@
 quarkus:
-  log:
-    level: INFO
-    category:
-      "se.irori":
-        level: DEBUG
   kafka:
     devservices:
-      image-name: docker.io/vectorized/redpanda:v22.3.11
       port: 9992
+      image-name: docker.io/vectorized/redpanda:v22.3.11
   hibernate-orm:
     database:
       generation: drop-and-create
@@ -16,12 +11,18 @@ quarkus:
     devservices:
       port: 5433
       db-name: dlqman
+  log:
+    level: INFO
+    category:
+      "se.irori":
+        level: DEBUG
 
 dlqman:
   kafka:
     common:
       "bootstrap.servers": localhost:9992
       "group.id": dlqman
+      "session.timeout.ms": 8000
     consumer:
       "key.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
       "value.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
@@ -30,8 +31,8 @@ dlqman:
   sources:
     - name: test-source
       description: Test source
-      source-topic: dlq-source
-      resend-topic: dlq-resend
+      source-topic: dev-source
+      resend-topic: dev-resend
       match-rules:
         - name: ignore-mine
           priority: 5

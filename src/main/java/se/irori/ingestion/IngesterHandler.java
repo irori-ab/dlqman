@@ -11,8 +11,6 @@ import se.irori.ingestion.manager.IngesterManager;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Class responsible for starting sources defined in properties.
@@ -34,12 +32,7 @@ public class IngesterHandler {
     log.info("Starting configured persistence processes:");
     config.sources()
         .forEach(source -> {
-          Map<String, String> consumerProperties = new HashMap<>();
-          consumerProperties.putAll(config.kafka().common());
-          consumerProperties.putAll(config.kafka().consumer());
-          consumerProperties.putAll(source.consumerPropertiesOverrides());
-
-          Consumer consumer = new KafkaConsumer(consumerProperties);
+          Consumer consumer = new KafkaConsumer(config, source);
 
           ingesterManager.registerIngester(
               Ingester.create(

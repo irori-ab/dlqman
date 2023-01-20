@@ -7,4 +7,9 @@ public interface ResendDLQStrategy extends DLQStrategy {
   boolean isFingerprinted();
   boolean maxTriesExceeded(int noTries);
   Long nextWaitDuration(Long durationMillis);
+
+  @Override
+  default String defaultStatusString() {
+    return "RESEND";
+  }
 }

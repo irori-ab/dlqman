@@ -9,10 +9,10 @@ public class StrategyFactory {
     switch (className) {
       case "SimpleResendDLQStrategy":
         return new SimpleResendDLQStrategy(getDurationFromConfig(config));
-      case "IgnoreDLQStrategy":
-        return new IgnoreDLQStrategy();
-      case "DiscardDLQStrategy":
-        return new DiscardDLQStrategy();
+      case "DismissDLQStrategy":
+        return new DismissDLQStrategy();
+      case "VoidDLQStrategy":
+        return new VoidDLQStrategy();
       case "MaxRetriesDLQStrategy":
         return new MaxRetriesDLQStrategy(getDurationFromConfig(config), getRetriesFromConfig(config));
       default:

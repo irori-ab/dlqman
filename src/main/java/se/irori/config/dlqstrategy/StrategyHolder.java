@@ -1,29 +1,30 @@
 package se.irori.config.dlqstrategy;
 
+import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.configuration.ConfigurationException;
 import se.irori.config.AppConfiguration;
 
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 
-@ApplicationScoped
+@Singleton
 public class StrategyHolder {
+  @Inject
+  AppConfiguration config;
+
   Map<String, DLQStrategy> strategies = new HashMap<>();
+
   Map<String, DLQStrategy> builtin = new HashMap<>(2)
   {{
-    put("ignore", new IgnoreDLQStrategy());
-    put("discard", new DiscardDLQStrategy());
+    put("dismiss", new DismissDLQStrategy());
+    put("void", new VoidDLQStrategy());
   }};
 
   public StrategyHolder(AppConfiguration config) {
-    for (AppConfiguration.Def def : config.dlqStrategies()) {
-      if (strategies.containsKey(def.name())) {
-        throw new ConfigurationException("Duplicate DLQ strategy names");
-      }
-      strategies.put(def.name(), StrategyFactory.create(def.className(), def.config()));
-    }
-    strategies.putAll(builtin);
+    this.config = config;
   }
 
   public DLQStrategy getStrategy(String name) {
@@ -33,12 +34,13 @@ public class StrategyHolder {
     throw new ConfigurationException(String.format("DLQStrategy not found: %s", name));
   }
 
-  public void OnStartup(AppConfiguration config) {
+  public void initialize(@Observes StartupEvent startupEvent) {
     for (AppConfiguration.Def def : config.dlqStrategies()) {
-      if (strategies.containsKey(def.name())) {
+      if (this.strategies.containsKey(def.name())) {
         throw new ConfigurationException("Duplicate DLQ strategy names");
       }
-      strategies.put(def.name(), StrategyFactory.create(def.className(), def.config()));
+      this.strategies.put(def.name(), StrategyFactory.create(def.className(), def.config()));
     }
+    this.strategies.putAll(builtin);
   }
 }

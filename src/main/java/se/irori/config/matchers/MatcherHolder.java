@@ -1,14 +1,21 @@
 package se.irori.config.matchers;
 
+import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.configuration.ConfigurationException;
 import se.irori.config.AppConfiguration;
 
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 
-@ApplicationScoped
+@Singleton
 public class MatcherHolder {
+
+  @Inject
+  AppConfiguration config;
+
   Map<String, Matcher> matchers = new HashMap<>();
   Map<String, Matcher> builtin = new HashMap<>(1)
   {{
@@ -16,13 +23,7 @@ public class MatcherHolder {
   }};
 
   public MatcherHolder(AppConfiguration config) {
-    for (AppConfiguration.Def def : config.matchers()) {
-      if (matchers.containsKey(def.name())) {
-        throw new ConfigurationException("Duplicate matcher names");
-      }
-      matchers.put(def.name(), MatcherFactory.create(def.className(), def.config()));
-    }
-    matchers.putAll(builtin);
+    this.config = config;
   }
 
   public Matcher getMatcher(String name) {
@@ -32,12 +33,14 @@ public class MatcherHolder {
     throw new ConfigurationException(String.format("Matcher not found: %s", name));
   }
 
-  public void startup(AppConfiguration config) {
+  void initialize(@Observes StartupEvent startupEvent) {
     for (AppConfiguration.Def def : config.matchers()) {
-      if (matchers.containsKey(def.name())) {
+      if (this.matchers.containsKey(def.name())) {
         throw new ConfigurationException("Duplicate matcher names");
       }
-      matchers.put(def.name(), MatcherFactory.create(def.className(), def.config()));
+      this.matchers.put(def.name(), MatcherFactory.create(def.className(), def.config()));
     }
+    this.matchers.putAll(builtin);
   }
+
 }

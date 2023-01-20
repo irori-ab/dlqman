@@ -44,7 +44,7 @@ public class InMemoryIngesterManager implements IngesterManager {
     Cancellable callback =
         ingester.consume()
             .flatMap(message ->
-                eventBus.<UUID>request("message-stream", message)
+                eventBus.<String>request("message-stream", message)
                     .map(io.vertx.mutiny.core.eventbus.Message::body)
                     .toMulti())
             .subscribe()
@@ -84,9 +84,9 @@ public class InMemoryIngesterManager implements IngesterManager {
     }
   }
 
-  private void handleOnItemEvent(UUID messageId, Ingester ingester) {
+  private void handleOnItemEvent(String tpo, Ingester ingester) {
     ingester.getProcessedMessages().getAndIncrement();
-    log.info("Finished ingester message with id [{}]", messageId);
+    log.info("Finished ingesting message with TPO [{}]", tpo);
   }
 
   private void handleOnFailureEvent(Throwable t, Ingester ingester) {

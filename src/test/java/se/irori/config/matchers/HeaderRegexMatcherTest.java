@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import se.irori.model.Message;
 import se.irori.model.Metadata;
 
-import static se.irori.utils.MockData.getDefaultSpringMessage;
+import static se.irori.utils.MockHelper.getDefaultSpringMessage;
 
 public class HeaderRegexMatcherTest {
 

@@ -63,7 +63,7 @@ public class Ingester {
   }
 
   public Multi<Message> consume() {
-    return consumer.consume(source).map( message -> {
+    return consumer.consume().map( message -> {
       message.setStatus(MessageStatus.NEW);
       applyRules(message);
       return message;
@@ -78,7 +78,7 @@ public class Ingester {
         if (rule.resendTopicOverride().isPresent()) {
           message.setDestinationTopic(rule.resendTopicOverride().get());
         }
-        break;
+        return;
       }
     }
     log.debug("No rules matched message {}", message.getId());

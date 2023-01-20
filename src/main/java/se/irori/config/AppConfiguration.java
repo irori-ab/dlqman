@@ -35,4 +35,5 @@ public interface AppConfiguration {
 
     Map<String, String> config();
   }
+
 }
