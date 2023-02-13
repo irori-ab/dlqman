@@ -1,7 +1,10 @@
 package se.irori.persistence.model;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
+import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
+import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
+import io.smallrye.mutiny.Uni;
 import lombok.*;
 import se.irori.model.Message;
 import se.irori.model.MessageStatus;
@@ -17,10 +20,14 @@ import static javax.persistence.CascadeType.ALL;
 @Getter
 @Setter
 @Builder
-@Entity(name = "MessageDao")
+@Entity(name = "Message")
 @Table(name = "MESSAGE")
 @NoArgsConstructor
 @AllArgsConstructor
+@NamedQueries({
+  @NamedQuery(name = "Message.toResend", query = "from Message where status = 'RESEND'"),
+  @NamedQuery(name = "Message.resent", query = "update Message set status = 'RESENT' where id = ?1")
+})
 public class MessageDao extends PanacheEntityBase {
 
   @Id
@@ -69,21 +76,45 @@ public class MessageDao extends PanacheEntityBase {
 
 
   public Message toMessage() {
-    return Message.builder()
+    Message msg = Message.builder()
         .id(getId())
-        .sourceId(getSourceId())
-        .sourcePartition(getSourcePartition())
-        .sourceOffset(getSourceOffset())
-        .fingerprint(getFingerprint())
-        //.matchedRule(getMatchedRule())
-        .metadataList(getMetadataList()
+        .sourceId(sourceId)
+      .sourceTopic(sourceTopic)
+        .sourcePartition(sourcePartition)
+        .sourceOffset(sourceOffset)
+        .fingerprint(fingerprint)
+//        .matchedRule(matchedRule)
+      .destinationTopic(destinationTopic)
+        .metadataList(metadataList
           .stream()
           .map(MetadataDao::to)
           .collect(Collectors.toList()))
-          .build();
+        .build();
+    return msg;
   }
 
-  public String getIdentifier() {
-    return String.format("%s:%s:%s", getSourceTopic(), getSourcePartition(), getSourceOffset());
+  public static Uni<String> getTPO(MessageDao dao) {
+    return Uni.createFrom().item(
+      String.format("%s:%s:%s", dao.getSourceTopic(), dao.getSourcePartition(), dao.getSourceOffset()));
   }
+
+  @ReactiveTransactional
+  public static Uni<List<MessageDao>> toResend() {
+    Log.debug("Fetching messages to resend");
+    return find("#Message.toResend").<MessageDao>list();
+  }
+
+  @ReactiveTransactional
+  public static Uni<String> setResent(MessageDao dao) {
+    Log.debug(String.format("Updating status on message message [%s]", dao.id.toString()));
+    return update("#Message.resent", dao.getId())
+      .flatMap(updates -> MessageDao.getTPO(dao));
+  }
+
+  @ReactiveTransactional
+  public static Uni<MessageDao> save(MessageDao dao) {
+    Log.debug(String.format("Saving message [%s]", dao.id.toString()));
+    return persist(dao).map(empty -> dao);
+  }
+
 }

@@ -7,6 +7,7 @@ import java.util.Map;
 
 @ConfigMapping(prefix = "dlqman")
 public interface AppConfiguration {
+
   List<Source> sources();
 
   List<Def> matchers();

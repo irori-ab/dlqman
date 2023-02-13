@@ -75,10 +75,14 @@ public class HeaderExtractor {
   private String exceptionMessage;
 
   private final Map<String, String> nonMatchedHeaders;
+  private final Map<String, String> matchedHeaders;
+  private final Map<String, String> allHeaders;
 
   public HeaderExtractor(List<KafkaHeader> headerList) {
     this.headerList = headerList;
     nonMatchedHeaders = new HashMap<>();
+    allHeaders = new HashMap<>();
+    matchedHeaders = new HashMap<>();
     extract();
   }
 
@@ -86,27 +90,34 @@ public class HeaderExtractor {
     headerList.forEach(header -> {
       if (topicHeaders.contains(header.key())) {
         topic = header.value().toString();
+        matchedHeaders.put(header.key(), header.value().toString());
         return;
       }
       if (partitionHeaders.contains(header.key())) {
         partition = Integer.valueOf(header.value().toString());
+        matchedHeaders.put(header.key(), header.value().toString());
         return;
       }
       if (offsetHeaders.contains(header.key())) {
         offset = Long.valueOf(header.value().toString());
+        matchedHeaders.put(header.key(), header.value().toString());
         return;
       }
       if (timeStampHeaders.contains(header.key())) {
         timestamp = header.value().toString();
+        matchedHeaders.put(header.key(), header.value().toString());
         return;
       }
       if (timeStampTypeHeaders.contains(header.key())) {
         timestamp = header.value().toString();
+        matchedHeaders.put(header.key(), header.value().toString());
         return;
       }
       //If the header does not map to a known DLQ type we add it to the "rest" map.
       nonMatchedHeaders.put(header.key(), header.value().toString());
     });
+    allHeaders.putAll(nonMatchedHeaders);
+    allHeaders.putAll(matchedHeaders);
     return this;
   }
 

@@ -26,14 +26,15 @@ public class DatabaseScheduler implements Scheduler {
   @Inject
   StrategyHolder strategyHolder;
 
+
   @ConsumeEvent("message-stream")
   public Uni<String> persist(Message message) {
     log.debug("Persisting message with TPO [{}:{}:{}]", message.getSourceTopic(), message.getSourcePartition(),
       message.getSourceOffset());
     Rule rule = message.getMatchedRule();
-    return applyStrategy(MessageDao.from(message), rule)
-        .<MessageDao>persistAndFlush()
-        .map(MessageDao::getIdentifier);
+    return Uni.createFrom().item(applyStrategy(MessageDao.from(message), rule))
+      .chain(MessageDao::save)
+      .chain(MessageDao::getTPO);
   }
 
   private MessageDao applyStrategy(MessageDao message, Rule rule) {

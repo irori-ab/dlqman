@@ -30,4 +30,8 @@ public class Message {
   private Rule matchedRule;
 
   private List<Metadata> metadataList;
+
+  public String getTPO() {
+    return String.format("%s:%s:%s", sourceTopic, sourcePartition, sourceOffset);
+  }
 }

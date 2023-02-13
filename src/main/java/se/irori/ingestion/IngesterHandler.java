@@ -2,6 +2,7 @@ package se.irori.ingestion;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
+import io.vertx.mutiny.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
 import se.irori.config.AppConfiguration;
 import se.irori.config.matchers.MatcherHolder;
@@ -28,11 +29,14 @@ public class IngesterHandler {
   @Inject
   MatcherHolder matcherHolder;
 
+  @Inject
+  Vertx vertx;
+
   void onApplicationStart(@Observes StartupEvent startupEvent) {
     log.info("Starting configured persistence processes:");
     config.sources()
         .forEach(source -> {
-          Consumer consumer = new KafkaConsumer(config, source);
+          Consumer consumer = new KafkaConsumer(config, source, vertx);
 
           ingesterManager.registerIngester(
               Ingester.create(

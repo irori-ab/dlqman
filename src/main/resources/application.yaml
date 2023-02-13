@@ -4,25 +4,41 @@ quarkus:
     category:
       "se.irori":
         level: DEBUG
+
   kafka:
     devservices:
       image-name: docker.io/vectorized/redpanda:v22.3.11
       port: 9992
   hibernate-orm:
+    log:
+      sql: false
     database:
       generation: drop-and-create
+    metrics:
+      enabled: false
   datasource:
     db-kind: postgresql
+    reactive:
+      url: postgresql://localhost:5433/dlqman
+      max-size: 20
     devservices:
       port: 5433
       db-name: dlqman
+    username: quarkus
+    password: quarkus
+  micrometer:
+    binder:
+      kafka:
+        enabled: true
+      vertx:
+        enabled: true
 
 dlqman:
   kafka:
     common:
       "bootstrap.servers": localhost:9992
-      "group.id": dlqman
     consumer:
+      "group.id": dlqman
       "key.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
       "value.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
       "auto.offset.reset": earliest

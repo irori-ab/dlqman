@@ -15,7 +15,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name = "MetadataDao")
+@Entity(name = "Metadata")
 @Table(name="METADATA")
 public class MetadataDao extends PanacheEntityBase {
 
@@ -25,7 +25,7 @@ public class MetadataDao extends PanacheEntityBase {
   private String key;
   private String value;
 
-  @ManyToOne(fetch = FetchType.LAZY, targetEntity = MessageDao.class)
+  @ManyToOne(fetch = FetchType.EAGER, targetEntity = MessageDao.class)
   public MessageDao message;
 
   public static MetadataDao from(Metadata metadata) {

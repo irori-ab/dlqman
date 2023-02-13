@@ -1,5 +1,6 @@
 package se.irori.ingestion.manager;
 
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.ShutdownEvent;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.Cancellable;

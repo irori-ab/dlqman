@@ -21,28 +21,32 @@ public class KafkaConsumer implements Consumer {
   private final Source source;
   private final Set<TopicPartition> topicPartitionSet = new HashSet<>();
 
-  public KafkaConsumer(AppConfiguration config, Source source) {
+  private final String consumerGroup;
+
+  public KafkaConsumer(AppConfiguration config, Source source, Vertx vertx) {
     Map<String, String> consumerConfig = new HashMap<>();
     consumerConfig.putAll(config.kafka().common());
     consumerConfig.putAll(config.kafka().consumer());
     consumerConfig.putAll(source.consumerPropertiesOverrides());
     this.source = source;
+    this.consumerGroup = consumerConfig.get("group.id");
     this.kafkaConsumer = io.vertx.mutiny.kafka.client.consumer.KafkaConsumer.create(
-        Vertx.vertx(),
+        vertx,
         consumerConfig,
         byte[].class, byte[].class);
+    init();
   }
 
   public void init() {
     kafkaConsumer.partitionsAssignedHandler(handler -> {
       handler.forEach(pi -> {
-        log.info("[{}] Assigned to partition {}:{}", source.name(), pi.getTopic(), pi.getPartition());
+        log.info("[{}:{}] Assigned to partition {}:{}", source.name(), consumerGroup, pi.getTopic(), pi.getPartition());
         topicPartitionSet.add(pi);
       });
     });
     kafkaConsumer.partitionsRevokedHandler(handler -> {
       handler.forEach(pi -> {
-        log.info("[{}] Reassigned to partition {}:{}", source.name(), pi.getTopic(), pi.getPartition());
+        log.info("[{}:{}] Reassigned to partition {}:{}", source.name(), consumerGroup, pi.getTopic(), pi.getPartition());
         topicPartitionSet.add(pi);
       });
     });
@@ -52,7 +56,7 @@ public class KafkaConsumer implements Consumer {
   public Multi<Message> consume() {
     kafkaConsumer.subscribeAndAwait(source.sourceTopic());
     kafkaConsumer.partitionsForAndAwait(source.sourceTopic()).stream()
-      .forEach(pi -> log.info("[{}] Subscribed to partition {}:{}", source.name(), pi.getTopic(), pi.getPartition()));
+      .forEach(pi -> log.info("[{}:{}] Subscribed to partition {}:{}", source.name(), consumerGroup, pi.getTopic(), pi.getPartition()));
 
     return kafkaConsumer.toMulti()
         .map(record -> mapRecord(record, source));
@@ -75,7 +79,7 @@ public class KafkaConsumer implements Consumer {
         .sourcePartition(record.partition())
         .sourceTopic(record.topic())
         .destinationTopic(source.resendTopic())
-        .metadataList(parseMetaDataFromHeaders(headerExtractor.getNonMatchedHeaders()))
+        .metadataList(parseMetaDataFromHeaders(headerExtractor.getAllHeaders()))
         .build();
   }
 

@@ -1,13 +1,17 @@
 quarkus:
   kafka:
     devservices:
+#      enabled: false
       port: 9992
       image-name: docker.io/vectorized/redpanda:v22.3.11
+      topic-partitions:
+        dlq-source: 1
   hibernate-orm:
     database:
       generation: drop-and-create
   datasource:
     db-kind: postgresql
+    jdbc: false
     devservices:
       port: 5433
       db-name: dlqman
@@ -16,6 +20,9 @@ quarkus:
     category:
       "se.irori":
         level: DEBUG
+
+
+
 
 dlqman:
   kafka:
@@ -31,8 +38,8 @@ dlqman:
   sources:
     - name: test-source
       description: Test source
-      source-topic: dev-source
-      resend-topic: dev-resend
+      source-topic: dlq-source
+      resend-topic: dlq-resend
       match-rules:
         - name: ignore-mine
           priority: 5
