@@ -1,5 +1,6 @@
 package se.irori.config.matchers;
 
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.configuration.ConfigurationException;
 import se.irori.config.AppConfiguration;
@@ -41,6 +42,7 @@ public class MatcherHolder {
       this.matchers.put(def.name(), MatcherFactory.create(def.className(), def.config()));
     }
     this.matchers.putAll(builtin);
+    Log.info(String.format("MatcherHolder initialized with %d matchers", this.matchers.size()));
   }
 
 }

@@ -1,8 +1,8 @@
 package se.irori.config.dlqstrategy;
 
-import io.quarkus.runtime.configuration.ConfigurationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import se.irori.config.ConfigurationException;
 
 public class SimpleResendDLQStrategyTest {
 

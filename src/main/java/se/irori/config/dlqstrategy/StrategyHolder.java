@@ -1,5 +1,6 @@
 package se.irori.config.dlqstrategy;
 
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.configuration.ConfigurationException;
 import se.irori.config.AppConfiguration;
@@ -42,5 +43,6 @@ public class StrategyHolder {
       this.strategies.put(def.name(), StrategyFactory.create(def.className(), def.config()));
     }
     this.strategies.putAll(builtin);
+    Log.info(String.format("StrategyHolder initialized with %d strategies", this.strategies.size()));
   }
 }

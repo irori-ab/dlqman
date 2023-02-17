@@ -1,9 +1,14 @@
 package se.irori.config.dlqstrategy;
 
+import se.irori.config.ConfigurationException;
+
 public class SimpleResendDLQStrategy implements ResendDLQStrategy {
   private final Long waitDuration;
 
   public SimpleResendDLQStrategy(Long waitDurationMillis) {
+    if (waitDurationMillis == null) {
+      throw new ConfigurationException("nextWaitDuration must be specified for SimpleResendDLQStrategy");
+    }
     this.waitDuration = waitDurationMillis;
   }
 

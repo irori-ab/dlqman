@@ -1,6 +1,7 @@
 package se.irori.config;
 
 import io.smallrye.config.ConfigMapping;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,9 @@ public interface AppConfiguration {
     Map<String, String> common();
     Map<String, String> consumer();
     Map<String, String> producer();
+
+    @ConfigProperty(defaultValue = "2000")
+    long pollTimeout();
 
   }
 

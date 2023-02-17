@@ -73,7 +73,7 @@ public class CommonDLQStrategyTest {
         .name("maxretries")
         .className("MaxRetriesDLQStrategy")
         .config(Map.of("nextWaitDuration", "1",
-          "maxT0ries","1")).build()
+          "maxTries","1")).build()
       ));
     sh.initialize(null);
     Assertions.assertNotNull(sh);
