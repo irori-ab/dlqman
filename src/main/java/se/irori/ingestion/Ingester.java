@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import se.irori.config.Rule;
+import se.irori.config.SharedContext;
 import se.irori.config.Source;
 import se.irori.config.matchers.MatcherHolder;
 import se.irori.ingestion.manager.IngesterState;
@@ -43,11 +44,11 @@ public class Ingester {
 
   List<Rule> sortedRules;
 
-  public static Ingester create(Source source, Consumer consumer, MatcherHolder matcherHolder) {
+  public static Ingester create(Source source, Consumer consumer, SharedContext ctx) {
     return Ingester.builder()
       .id(UUID.randomUUID())
       .consumer(consumer)
-      .matcherHolder(matcherHolder)
+      .matcherHolder(ctx.getMatchers())
       .source(source)
       .sortedRules(source.matchRules().stream().sorted(Comparator.comparing(Rule::priority)).collect(Collectors.toList()))
       .ingesterState(IngesterState.CREATED)

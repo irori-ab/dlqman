@@ -2,10 +2,9 @@ package se.irori.ingestion.kafka;
 
 import io.smallrye.mutiny.Multi;
 import io.vertx.kafka.client.common.TopicPartition;
-import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.kafka.client.consumer.KafkaConsumerRecord;
 import lombok.extern.slf4j.Slf4j;
-import se.irori.config.AppConfiguration;
+import se.irori.config.SharedContext;
 import se.irori.config.Source;
 import se.irori.ingestion.Consumer;
 import se.irori.model.Message;
@@ -23,15 +22,15 @@ public class KafkaConsumer implements Consumer {
 
   private final String consumerGroup;
 
-  public KafkaConsumer(AppConfiguration config, Source source, Vertx vertx) {
+  public KafkaConsumer(SharedContext ctx, Source source) {
     Map<String, String> consumerConfig = new HashMap<>();
-    consumerConfig.putAll(config.kafka().common());
-    consumerConfig.putAll(config.kafka().consumer());
+    consumerConfig.putAll(ctx.getConfig().kafka().common());
+    consumerConfig.putAll(ctx.getConfig().kafka().consumer());
     consumerConfig.putAll(source.consumerPropertiesOverrides());
     this.source = source;
     this.consumerGroup = consumerConfig.get("group.id");
     this.kafkaConsumer = io.vertx.mutiny.kafka.client.consumer.KafkaConsumer.create(
-        vertx,
+        ctx.getVertx(),
         consumerConfig,
         byte[].class, byte[].class);
     init();

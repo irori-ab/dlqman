@@ -2,9 +2,9 @@ package se.irori.ingestion;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
-import io.vertx.mutiny.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
 import se.irori.config.AppConfiguration;
+import se.irori.config.SharedContext;
 import se.irori.config.matchers.MatcherHolder;
 import se.irori.ingestion.kafka.KafkaConsumer;
 import se.irori.ingestion.manager.IngesterManager;
@@ -30,19 +30,19 @@ public class IngesterHandler {
   MatcherHolder matcherHolder;
 
   @Inject
-  Vertx vertx;
+  SharedContext ctx;
 
   void onApplicationStart(@Observes StartupEvent startupEvent) {
-    log.info("Starting configured persistence processes:");
+    log.info("Starting configured ingester processes:");
     config.sources()
         .forEach(source -> {
-          Consumer consumer = new KafkaConsumer(config, source, vertx);
+          Consumer consumer = new KafkaConsumer(ctx, source);
 
           ingesterManager.registerIngester(
               Ingester.create(
                   source,
                   consumer,
-                  matcherHolder));
+                  ctx));
         });
   }
 

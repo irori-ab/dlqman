@@ -3,11 +3,10 @@ package se.irori.process.kafka;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.mutiny.Uni;
 import io.vertx.kafka.client.common.TopicPartition;
-import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.kafka.client.producer.KafkaHeader;
 import io.vertx.mutiny.kafka.client.producer.KafkaProducerRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import se.irori.config.AppConfiguration;
+import se.irori.config.SharedContext;
 import se.irori.model.Message;
 import se.irori.model.MetaDataType;
 import se.irori.model.Metadata;
@@ -25,24 +24,27 @@ public class KafkaProducer {
   final io.vertx.mutiny.kafka.client.producer.KafkaProducer<byte[], byte[]> kafkaProducer;
   final io.vertx.mutiny.kafka.client.consumer.KafkaConsumer<byte[], byte[]> kafkaConsumer;
 
+  long maxWaitPollExisting;
 
-  public KafkaProducer(AppConfiguration config, Vertx vertx) {
+
+  public KafkaProducer(SharedContext ctx) {
+    maxWaitPollExisting = ctx.getConfig().kafka().pollTimeout();
 
     Map<String, String> producerConfig = new HashMap<>();
-    producerConfig.putAll(config.kafka().common());
-    producerConfig.putAll(config.kafka().producer());
+    producerConfig.putAll(ctx.getConfig().kafka().common());
+    producerConfig.putAll(ctx.getConfig().kafka().producer());
 
     Map<String, String> consumerConfig = new HashMap<>();
-    consumerConfig.putAll(config.kafka().common());
-    consumerConfig.putAll(config.kafka().consumer());
+    consumerConfig.putAll(ctx.getConfig().kafka().common());
+    consumerConfig.putAll(ctx.getConfig().kafka().consumer());
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "dlqman-resender");
     consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
     this.kafkaProducer = io.vertx.mutiny.kafka.client.producer.KafkaProducer.create(
-      vertx,
+      ctx.getVertx(),
       producerConfig,
       byte[].class, byte[].class);
     this.kafkaConsumer = io.vertx.mutiny.kafka.client.consumer.KafkaConsumer.create(
-      vertx,
+      ctx.getVertx(),
       consumerConfig,
       byte[].class, byte[].class);
   }
