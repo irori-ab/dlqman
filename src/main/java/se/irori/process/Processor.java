@@ -6,7 +6,6 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.eventbus.EventBus;
 import io.vertx.mutiny.core.eventbus.Message;
-import org.hibernate.reactive.mutiny.Mutiny;
 import se.irori.persistence.model.MessageDao;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -14,6 +13,7 @@ import javax.enterprise.context.control.ActivateRequestContext;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 @ActivateRequestContext
@@ -32,7 +32,7 @@ public class Processor {
     return scheduler();
   }
 
-  @Scheduled(every = "5s")
+  @Scheduled(every = "5s", delay = 10, delayUnit = TimeUnit.SECONDS)
   public Uni<Void> scheduler() {
     return pollDB()
       .collect().asList()
@@ -46,14 +46,8 @@ public class Processor {
       .replaceWithVoid();
   }
 
-  @Inject
-  Mutiny.SessionFactory factory;
-
-
-
   public Multi<String> pollDB() {
     Log.debug("Initializing DB-poll");
-//    Log.info(String.format("OpenSessions: %d", factory.getStatistics().getSessionOpenCount()));
     return poller.poll("")
       .onItem().transformToMulti(list ->
         Multi.createFrom().iterable(list)
