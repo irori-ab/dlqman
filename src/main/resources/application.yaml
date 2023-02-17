@@ -9,6 +9,10 @@ quarkus:
     devservices:
       image-name: docker.io/vectorized/redpanda:v22.3.11
       port: 9992
+      topic-partitions:
+        dlq-source: 1
+        dlq-override: 1
+        dlq-resend: 1
   hibernate-orm:
     log:
       sql: false
@@ -19,13 +23,13 @@ quarkus:
   datasource:
     db-kind: postgresql
     reactive:
-      url: postgresql://localhost:5433/dlqman
+#      url: postgresql://localhost:5433/dlqman
       max-size: 20
     devservices:
       port: 5433
       db-name: dlqman
-    username: quarkus
-    password: quarkus
+#    username: quarkus
+#    password: quarkus
   micrometer:
     binder:
       kafka:
@@ -43,6 +47,7 @@ dlqman:
       "value.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
       "auto.offset.reset": earliest
       "enable.auto.commit": true
+    poll-timeout: 2000
   sources:
     - name: test-source
       description: Test source

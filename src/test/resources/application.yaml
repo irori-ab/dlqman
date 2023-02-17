@@ -1,78 +1,26 @@
-quarkus:
-  kafka:
-    devservices:
-#      enabled: false
-      port: 9992
-      image-name: docker.io/vectorized/redpanda:v22.3.11
-      topic-partitions:
-        dlq-source: 1
-  hibernate-orm:
-    database:
-      generation: drop-and-create
-  datasource:
-    db-kind: postgresql
-    jdbc: false
-    devservices:
-      port: 5433
-      db-name: dlqman
-  log:
-    level: INFO
-    category:
-      "se.irori":
-        level: DEBUG
+consumer-test:
+    name: consumer-test
+    description: Test source
+    source-topic: consumer-test
+    resend-topic: dlq-resend
+    match-rules:
+      - name: ignore-mine
+        priority: 5
+        matcher: myheader-my-matcher
+        strategy: dismiss
+        resend-topic-override: dlq-override
+      - name: resend-theirs
+        priority: 6
+        matcher: myheader-their-matcher
+        strategy: resend10s
+        resend-topic-override: dlq-override
+      - name: sellbergs
+        priority: 100
+        matcher: all
+        strategy: dismiss
 
-
-
-
-dlqman:
-  kafka:
-    common:
-      "bootstrap.servers": localhost:9992
-      "group.id": dlqman
-      "session.timeout.ms": 8000
-    consumer:
-      "key.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
-      "value.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
-      "auto.offset.reset": earliest
-      "enable.auto.commit": true
-  sources:
-    - name: test-source
-      description: Test source
-      source-topic: dlq-source
-      resend-topic: dlq-resend
-      match-rules:
-        - name: ignore-mine
-          priority: 5
-          matcher: myheader-my-matcher
-          strategy: dismiss
-          resend-topic-override: dlq-override
-        - name: resend-theirs
-          priority: 6
-          matcher: myheader-their-matcher
-          strategy: resend10s
-          resend-topic-override: dlq-override
-        - name: sellbergs
-          priority: 100
-          matcher: all
-          strategy: dismiss
-
-  matchers:
-    - name: myheader-my-matcher
-      class-name: HeaderRegexMatcher
-      config:
-        headerName: myheader
-        regexPattern: my.*
-    - name: myheader-their-matcher
-      class-name: HeaderRegexMatcher
-      config:
-        headerName: myheader
-        regexPattern: their.*
-
-  dlq-strategies:
-    - name: ignore-strategy
-      class-name: DismissDLQStrategy
-    - name: resend10s
-      class-name: SimpleResendDLQStrategy
-      config:
-        nextWaitDuration: 10000
-
+mp:
+  messaging:
+    outgoing:
+      dlq-source:
+        merge: true
