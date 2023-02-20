@@ -25,7 +25,7 @@ import static javax.persistence.CascadeType.ALL;
 @NoArgsConstructor
 @AllArgsConstructor
 @NamedQueries({
-  @NamedQuery(name = "Message.toResend", query = "from Message where status = 'RESEND'"),
+  @NamedQuery(name = "Message.toResend", query = "from Message where status = 'RESEND' and processAt < ?1"),
   @NamedQuery(name = "Message.resent", query = "update Message set status = 'RESENT' where id = ?1")
 })
 public class MessageDao extends PanacheEntityBase {
@@ -101,7 +101,7 @@ public class MessageDao extends PanacheEntityBase {
   @ReactiveTransactional
   public static Uni<List<MessageDao>> toResend() {
     Log.debug("Fetching messages to resend");
-    return find("#Message.toResend").<MessageDao>list();
+    return find("#Message.toResend", OffsetDateTime.now()).<MessageDao>list();
   }
 
   @ReactiveTransactional
