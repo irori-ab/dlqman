@@ -1,8 +1,8 @@
 package se.irori.config.matchers;
 
-import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.configuration.ConfigurationException;
+import lombok.extern.slf4j.Slf4j;
 import se.irori.config.AppConfiguration;
 
 import javax.enterprise.event.Observes;
@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Singleton
+@Slf4j
 public class MatcherHolder {
 
   @Inject
@@ -42,7 +43,7 @@ public class MatcherHolder {
       this.matchers.put(def.name(), MatcherFactory.create(def.className(), def.config()));
     }
     this.matchers.putAll(builtin);
-    Log.info(String.format("MatcherHolder initialized with %d matchers", this.matchers.size()));
+    log.info(String.format("MatcherHolder initialized with %d matchers", this.matchers.size()));
   }
 
 }

@@ -1,8 +1,8 @@
 package se.irori.config.dlqstrategy;
 
-import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.configuration.ConfigurationException;
+import lombok.extern.slf4j.Slf4j;
 import se.irori.config.AppConfiguration;
 
 import javax.enterprise.event.Observes;
@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Singleton
+@Slf4j
 public class StrategyHolder {
   @Inject
   AppConfiguration config;
@@ -43,6 +44,6 @@ public class StrategyHolder {
       this.strategies.put(def.name(), StrategyFactory.create(def.className(), def.config()));
     }
     this.strategies.putAll(builtin);
-    Log.info(String.format("StrategyHolder initialized with %d strategies", this.strategies.size()));
+    log.info(String.format("StrategyHolder initialized with %d strategies", this.strategies.size()));
   }
 }
