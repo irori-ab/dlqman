@@ -1,13 +1,14 @@
 package se.irori.ingestion.manager;
 
-import io.quarkus.logging.Log;
 import io.quarkus.runtime.ShutdownEvent;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.Cancellable;
 import io.vertx.mutiny.core.eventbus.EventBus;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import se.irori.config.AppConfiguration;
 import se.irori.ingestion.Ingester;
+import se.irori.model.Message;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -26,6 +27,9 @@ public class InMemoryIngesterManager implements IngesterManager {
 
   @Inject
   EventBus eventBus;
+
+  @Inject
+  AppConfiguration config;
 
   void onApplicationTermination(@Observes ShutdownEvent shutdownEvent) {
     log.info("Received shutdown event, starting cancelation of processes");
@@ -46,8 +50,9 @@ public class InMemoryIngesterManager implements IngesterManager {
         ingester.consume()
             .flatMap(message ->
                 eventBus.<String>request("message-stream", message)
-                    .map(io.vertx.mutiny.core.eventbus.Message::body)
-                    .toMulti())
+                  .map(io.vertx.mutiny.core.eventbus.Message::body)
+                  .call(() -> handlePublishMessage(message))
+                  .toMulti())
             .subscribe()
             .with(messageId -> handleOnItemEvent(messageId, ingester),
                 t -> handleOnFailureEvent(t, ingester),
@@ -98,5 +103,13 @@ public class InMemoryIngesterManager implements IngesterManager {
   private void handleOnCompletedEvent(Ingester ingester) {
     log.info("Ingester with id [{}] completed", ingester.getId());
     ingester.changeIngesterState(IngesterState.COMPLETED);
+  }
+
+  private Uni<Void> handlePublishMessage(Message message) {
+    if (config.publishConsumedMessages()) {
+      // Publish sucessful messages on the bus for further processing
+      eventBus.publish("ingested-messages", message);
+    }
+    return Uni.createFrom().voidItem();
   }
 }

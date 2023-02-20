@@ -5,31 +5,28 @@ quarkus:
       "se.irori":
         level: DEBUG
 
-  kafka:
-    devservices:
-      image-name: docker.io/vectorized/redpanda:v22.3.11
-      port: 9992
-      topic-partitions:
-        dlq-source: 1
-        dlq-override: 1
-        dlq-resend: 1
-  hibernate-orm:
-    log:
-      sql: false
-    database:
-      generation: drop-and-create
-    metrics:
-      enabled: false
+#  kafka:
+#    devservices:
+#      image-name: docker.io/vectorized/redpanda:v22.3.11
+#      port: 9992
+#      topic-partitions:
+#        dlq-source: 1
+#        dlq-override: 1
+#        dlq-resend: 1
+#  hibernate-orm:
+#    log:
+#      sql: false
+#    database:
+#      generation: drop-and-create
+#    metrics:
+#      enabled: false
   datasource:
     db-kind: postgresql
     reactive:
-#      url: postgresql://localhost:5433/dlqman
       max-size: 20
-    devservices:
-      port: 5433
-      db-name: dlqman
-#    username: quarkus
-#    password: quarkus
+#    devservices:
+#      port: 5433
+#      db-name: dlqman
   micrometer:
     binder:
       kafka:
@@ -48,44 +45,137 @@ dlqman:
       "auto.offset.reset": earliest
       "enable.auto.commit": true
     poll-timeout: 2000
-  sources:
-    - name: test-source
-      description: Test source
-      source-topic: dlq-source
-      resend-topic: dlq-resend
-      match-rules:
-        - name: ignore-mine
-          priority: 5
-          matcher: myheader-my-matcher
-          strategy: dismiss
-          resend-topic-override: dlq-override
-        - name: resend-theirs
-          priority: 6
-          matcher: myheader-their-matcher
-          strategy: resend10s
-          resend-topic-override: dlq-override
-        - name: sellbergs
-          priority: 100
-          matcher: all
-          strategy: dismiss
 
-  matchers:
-    - name: myheader-my-matcher
-      class-name: HeaderRegexMatcher
-      config:
-        headerName: myheader
-        regexPattern: my.*
-    - name: myheader-their-matcher
-      class-name: HeaderRegexMatcher
-      config:
-        headerName: myheader
-        regexPattern: their.*
+"%dev":
+  quarkus:
+    log:
+      level: INFO
+      category:
+        "se.irori":
+          level: DEBUG
+    kafka:
+      devservices:
+        image-name: docker.io/vectorized/redpanda:v22.3.11
+        port: 9992
+        topic-partitions:
+          dlq-source: 1
+          dlq-override: 1
+          dlq-resend: 1
+    hibernate-orm:
+      log:
+        sql: false
+      database:
+        generation: drop-and-create
+    datasource:
+      db-kind: postgresql
+      reactive:
+        max-size: 20
+      devservices:
+        port: 5433
+        db-name: dlqman
+  dlqman:
+    sources:
+      test-source:
+        name: test-source
+        description: Test source
+        source-topic: dlq-source
+        resend-topic: dlq-resend
+        match-rules:
+          - name: save-fatal
+            priority: 5
+            matcher: exception-is-fatal
+            strategy: dismiss
+          - name: resend-retryable
+            priority: 6
+            matcher: exception-is-retryable
+            strategy: resend10s
+            resend-topic-override: dlq-override
+          - name: catchtherest
+            priority: 100
+            matcher: all
+            strategy: void
+    matchers:
+      - name: exception-is-retryable
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: internal-dlq-exception-class
+          regexPattern: .*RetryableException.*
+      - name: exception-is-fatal
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: internal-dlq-exception-class
+          regexPattern: .*FatalException.*
 
-  dlq-strategies:
-    - name: ignore-strategy
-      class-name: DismissDLQStrategy
-    - name: resend10s
-      class-name: SimpleResendDLQStrategy
-      config:
-        nextWaitDuration: 10000
+    dlq-strategies:
+      - name: resend10s
+        class-name: SimpleResendDLQStrategy
+        config:
+          nextWaitDuration: 10000
+"%test":
+  dlqman:
+    sources:
+      testsource:
+        name: test-source
+        description: Test source
+        source-topic: dlq-source
+        resend-topic: dlq-resend
+        match-rules:
+          - name: ignore-mine
+            priority: 5
+            matcher: dismiss-matcher
+            strategy: dismiss
+            resend-topic-override: dlq-override
+          - name: resend-theirs
+            priority: 6
+            matcher: resend-matcher
+            strategy: resend10s
+            resend-topic-override: dlq-override
+          - name: ignore-rest
+            priority: 100
+            matcher: all
+            strategy: dismiss
+      consumer-test:
+        name: consumer-test
+        enabled: false
+        description: Test source
+        source-topic: consumer-test
+        resend-topic: dlq-resend
+        match-rules:
+          - name: dismiss-mine
+            priority: 5
+            matcher: dismiss-matcher
+            strategy: dismiss
+            resend-topic-override: dlq-override
+          - name: resend-theirs
+            priority: 6
+            matcher: resend-matcher
+            strategy: resend10s
+            resend-topic-override: dlq-override
+          - name: dismiss-rest
+            priority: 100
+            matcher: all
+            strategy: dismiss
+    matchers:
+      - name: dismiss-matcher
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: myheader
+          regexPattern: dismiss
+      - name: resend-matcher
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: myheader
+          regexPattern: resend
+
+    dlq-strategies:
+      - name: resend10s
+        class-name: SimpleResendDLQStrategy
+        config:
+          nextWaitDuration: 10000
+    publish-consumed-messages: true
+  mp:
+    messaging:
+      outgoing:
+        dlq-source:
+          merge: true
 

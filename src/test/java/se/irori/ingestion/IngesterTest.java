@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import se.irori.config.Rule;
+import se.irori.config.SharedContext;
 import se.irori.config.Source;
 import se.irori.config.matchers.AllMatcher;
 import se.irori.config.matchers.HeaderRegexMatcher;
@@ -50,6 +51,8 @@ public class IngesterTest {
 
   @BeforeEach
   public void initMocks() {
+    SharedContext ctx = SharedContext.builder()
+      .matchers(holder).build();
     MockHelper.mockDefaultSource(source, allp100, regexp1, regexp2);
     MockHelper.mockDefaultRegexRule(regexp1, "rule1", 1, "regex1");
     MockHelper.mockDefaultRegexRule(regexp2, "rule2", 1, "regex2");
@@ -59,7 +62,7 @@ public class IngesterTest {
     when(holder.getMatcher(eq("regex2"))).thenReturn(new HeaderRegexMatcher("myheader", "other.*"));
     when(holder.getMatcher(eq("all"))).thenReturn(new AllMatcher());
 
-    ingester = Ingester.create(source, consumer, holder);
+    ingester = Ingester.create(source, consumer, ctx);
   }
 
   @Test

@@ -15,6 +15,10 @@ public class SourceImpl implements Source {
 
   Map<String, String> consumerPropertiesOverrides;
   @Override
+  public Boolean enabled() {
+    return true;
+  }
+  @Override
   public String name() {
     return name;
   }

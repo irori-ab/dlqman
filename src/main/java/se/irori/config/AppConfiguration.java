@@ -1,6 +1,7 @@
 package se.irori.config;
 
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
@@ -9,13 +10,16 @@ import java.util.Map;
 @ConfigMapping(prefix = "dlqman")
 public interface AppConfiguration {
 
-  List<Source> sources();
+  Map<String, Source> sources();
 
   List<Def> matchers();
 
   List<Def> dlqStrategies();
 
   KafkaConfig kafka();
+
+  @WithDefault("false")
+  Boolean publishConsumedMessages();
 
   interface KafkaConfig {
     //@ConfigProperty(defaultValue = "true")

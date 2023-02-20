@@ -1,26 +1,96 @@
-consumer-test:
-    name: consumer-test
-    description: Test source
-    source-topic: consumer-test
-    resend-topic: dlq-resend
-    match-rules:
-      - name: ignore-mine
-        priority: 5
-        matcher: myheader-my-matcher
-        strategy: dismiss
-        resend-topic-override: dlq-override
-      - name: resend-theirs
-        priority: 6
-        matcher: myheader-their-matcher
-        strategy: resend10s
-        resend-topic-override: dlq-override
-      - name: sellbergs
-        priority: 100
-        matcher: all
-        strategy: dismiss
 
-mp:
-  messaging:
-    outgoing:
-      dlq-source:
-        merge: true
+
+"%test":
+  quarkus:
+    log:
+      level: INFO
+      category:
+        "se.irori":
+          level: DEBUG
+    kafka:
+      devservices:
+        image-name: docker.io/vectorized/redpanda:v22.3.11
+        port: 9992
+        topic-partitions:
+          dlq-source: 1
+          dlq-override: 1
+          dlq-resend: 1
+    hibernate-orm:
+      log:
+        sql: false
+      database:
+        generation: drop-and-create
+    datasource:
+      db-kind: postgresql
+      reactive:
+        max-size: 20
+      devservices:
+        port: 5433
+        db-name: dlqman
+  dlqman:
+    sources:
+      testsource:
+        name: test-source
+        description: Test source
+        source-topic: dlq-source
+        resend-topic: dlq-resend
+        match-rules:
+          - name: ignore-mine
+            priority: 5
+            matcher: dismiss-matcher
+            strategy: dismiss
+            resend-topic-override: dlq-override
+          - name: resend-theirs
+            priority: 6
+            matcher: resend-matcher
+            strategy: resend10s
+            resend-topic-override: dlq-override
+          - name: ignore-rest
+            priority: 100
+            matcher: all
+            strategy: dismiss
+      consumer-test:
+        name: consumer-test
+        enabled: false
+        description: Test source
+        source-topic: consumer-test
+        resend-topic: dlq-resend
+        match-rules:
+          - name: dismiss-mine
+            priority: 5
+            matcher: dismiss-matcher
+            strategy: dismiss
+            resend-topic-override: dlq-override
+          - name: resend-theirs
+            priority: 6
+            matcher: resend-matcher
+            strategy: resend10s
+            resend-topic-override: dlq-override
+          - name: dismiss-rest
+            priority: 100
+            matcher: all
+            strategy: dismiss
+    matchers:
+      - name: dismiss-matcher
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: myheader
+          regexPattern: dismiss
+      - name: resend-matcher
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: myheader
+          regexPattern: resend
+
+    dlq-strategies:
+      - name: resend10s
+        class-name: SimpleResendDLQStrategy
+        config:
+          nextWaitDuration: 10000
+    publish-consumed-messages: true
+  mp:
+    messaging:
+      outgoing:
+        dlq-source:
+          merge: true
+

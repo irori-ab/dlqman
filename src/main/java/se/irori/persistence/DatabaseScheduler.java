@@ -1,5 +1,6 @@
 package se.irori.persistence;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +27,17 @@ public class DatabaseScheduler implements Scheduler {
   @Inject
   StrategyHolder strategyHolder;
 
+  @Inject
+  MeterRegistry metrics;
+
 
   @ConsumeEvent("message-stream")
   public Uni<String> persist(Message message) {
     log.debug("Persisting message with TPO [{}:{}:{}]", message.getSourceTopic(), message.getSourcePartition(),
       message.getSourceOffset());
     Rule rule = message.getMatchedRule();
+    metrics.counter("message.matched.rule", "topic", message.getSourceTopic(), "rule", rule.name(),
+      "matcher", rule.matcher(), "strategy", rule.strategy());
     return Uni.createFrom().item(applyStrategy(MessageDao.from(message), rule))
       .chain(MessageDao::save)
       .chain(MessageDao::getTPO);
