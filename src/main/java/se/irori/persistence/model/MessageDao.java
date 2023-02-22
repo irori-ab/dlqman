@@ -52,6 +52,9 @@ public class MessageDao extends PanacheEntityBase {
 
   private Long waitTime;
 
+  @Transient
+  private boolean persist;
+
 
   @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
   public List<MetadataDao> metadataList;
@@ -100,7 +103,7 @@ public class MessageDao extends PanacheEntityBase {
 
   @ReactiveTransactional
   public static Uni<List<MessageDao>> toResend() {
-    Log.debug("Fetching messages to resend");
+    Log.trace("Fetching messages to resend");
     return find("#Message.toResend", OffsetDateTime.now()).<MessageDao>list();
   }
 
@@ -113,8 +116,15 @@ public class MessageDao extends PanacheEntityBase {
 
   @ReactiveTransactional
   public static Uni<MessageDao> save(MessageDao dao) {
-    Log.debug(String.format("Saving message [%s]", dao.id.toString()));
-    return persist(dao).map(empty -> dao);
+    if (dao.isPersist()) {
+      Log.debug(String.format("Saving message [%s] TPO [%s:%s:%s]", dao.id.toString(), dao.getSourceTopic(),
+        dao.getSourcePartition(), dao.getSourceOffset()));
+      return persist(dao).map(empty -> dao);
+    } else {
+      Log.debug(String.format("Voiding message with TPO [%s:%s:%s]", dao.getSourceTopic(), dao.getSourcePartition(),
+        dao.getSourceOffset()));
+      return Uni.createFrom().item(dao);
+    }
   }
 
 }

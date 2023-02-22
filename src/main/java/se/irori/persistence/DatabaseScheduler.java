@@ -33,11 +33,11 @@ public class DatabaseScheduler implements Scheduler {
 
   @ConsumeEvent("message-stream")
   public Uni<String> persist(Message message) {
-    log.debug("Persisting message with TPO [{}:{}:{}]", message.getSourceTopic(), message.getSourcePartition(),
+    log.debug("Processing message with TPO [{}:{}:{}]", message.getSourceTopic(), message.getSourcePartition(),
       message.getSourceOffset());
     Rule rule = message.getMatchedRule();
     metrics.counter("message.matched.rule", "topic", message.getSourceTopic(), "rule", rule.name(),
-      "matcher", rule.matcher(), "strategy", rule.strategy());
+      "matcher", rule.matcher(), "strategy", rule.strategy()).increment();
     return Uni.createFrom().item(applyStrategy(MessageDao.from(message), rule))
       .chain(MessageDao::save)
       .chain(MessageDao::getTPO);
@@ -46,12 +46,13 @@ public class DatabaseScheduler implements Scheduler {
   private MessageDao applyStrategy(MessageDao message, Rule rule) {
     if (rule != null) {
       DLQStrategy strategy = strategyHolder.getStrategy(rule.strategy());
+      message.setPersist(strategy.persist());
+      message.setStatus(MessageStatus.valueOf(strategy.defaultStatusString()));
       if (strategy instanceof ResendDLQStrategy) {
         ResendDLQStrategy rstrat = (ResendDLQStrategy) strategy;
         Long waitDuration = rstrat.nextWaitDuration(null);
         message.setProcessAt(Instant.now().plusMillis(waitDuration).atOffset(ZoneOffset.UTC));
         message.setWaitTime(waitDuration);
-        message.setStatus(MessageStatus.RESEND);
         if (rule.resendTopicOverride().isPresent()) {
           message.setDestinationTopic(rule.resendTopicOverride().get());
         }

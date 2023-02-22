@@ -40,14 +40,14 @@ public class Processor {
         if (tpomap.size() > 0) {
           Log.info(String.format("Resent %d messages", tpomap.size()));
         } else {
-          Log.debug("Resent no messages");
+          Log.trace("Resent no messages");
         }
       })
       .replaceWithVoid();
   }
 
   public Multi<String> pollDB() {
-    Log.debug("Initializing DB-poll");
+    Log.trace("Initializing DB-poll");
     return poller.poll("")
       .onItem().transformToMulti(list ->
         Multi.createFrom().iterable(list)
