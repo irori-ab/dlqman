@@ -1,7 +1,6 @@
 package se.irori.config.matchers;
 
 import se.irori.model.Message;
-import se.irori.model.MetaDataType;
 import se.irori.model.Metadata;
 
 import java.util.Optional;
@@ -30,7 +29,7 @@ public class HeaderRegexMatcher implements Matcher {
   public boolean match(Message message) {
     if (message != null && message.getMetadataList() != null) {
       Optional<Metadata> metadata = message.getMetadataList().stream().filter(md ->
-        MetaDataType.SOURCE_HEADER.equals(md.getType()) && headerName.equals(md.getKey())).findFirst();
+        headerName.equals(md.getKey())).findFirst();
       if (metadata.isPresent()) {
         return regex.matcher(metadata.get().getValue()).matches();
       }
