@@ -1,5 +1,6 @@
 package se.irori.ingestion.manager;
 
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.ShutdownEvent;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.Cancellable;
@@ -92,7 +93,7 @@ public class InMemoryIngesterManager implements IngesterManager {
 
   private void handleOnItemEvent(String tpo, Ingester ingester) {
     ingester.getProcessedMessages().getAndIncrement();
-    log.info("Finished ingesting message with TPO [{}]", tpo);
+    log.debug("Finished ingesting message with TPO [{}]", tpo);
   }
 
   private void handleOnFailureEvent(Throwable t, Ingester ingester) {
@@ -108,6 +109,7 @@ public class InMemoryIngesterManager implements IngesterManager {
   private Uni<Void> handlePublishMessage(Message message) {
     if (config.publishConsumedMessages()) {
       // Publish sucessful messages on the bus for further processing
+      Log.trace(String.format("Internally republishing to ingested-messages TPO %s", message.getTPO()));
       eventBus.publish("ingested-messages", message);
     }
     return Uni.createFrom().voidItem();

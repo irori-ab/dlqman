@@ -1,21 +1,30 @@
 package se.irori.process;
 
-import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
-import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import se.irori.persistence.MessageRepository;
+import lombok.extern.slf4j.Slf4j;
 import se.irori.persistence.model.MessageDao;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.util.List;
 
 @ApplicationScoped
+@Slf4j
 public class DatabasePoller implements Poller {
 
   @Override
-  @ConsumeEvent("poll-resend")
-  public Uni<List<MessageDao>> poll(String notused) {
-    return MessageDao.toResend();
+  public Multi<MessageDao> pollMulti(int limit) {
+//    return Multi.createBy().repeating().uni(AtomicInteger::new,
+//        page -> MessageDao.toResendLimit(limit))
+//      .until(List::isEmpty)
+      return MessageDao.toResendLimit(limit)
+      .onItem().disjoint();
   }
+
+  @Override
+  public Uni<List<MessageDao>> pollUni(int limit) {
+    return MessageDao.toResendLimit(limit);
+  }
+
+
 }

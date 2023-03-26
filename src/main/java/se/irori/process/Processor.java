@@ -1,11 +1,11 @@
 package se.irori.process;
 
+import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.logging.Log;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.eventbus.EventBus;
-import io.vertx.mutiny.core.eventbus.Message;
+import org.hibernate.reactive.mutiny.Mutiny;
 import se.irori.persistence.model.MessageDao;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -13,7 +13,9 @@ import javax.enterprise.context.control.ActivateRequestContext;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @ActivateRequestContext
@@ -24,7 +26,7 @@ public class Processor {
   Poller poller;
 
   @Inject
-  EventBus eventBus;
+  ResendProducer producer;
 
   @GET
   @Path("/poll")
@@ -32,31 +34,60 @@ public class Processor {
     return scheduler();
   }
 
-  @Scheduled(every = "5s", delay = 10, delayUnit = TimeUnit.SECONDS)
-  public Uni<Void> scheduler() {
-    return pollDB()
-      .collect().asList()
-      .invoke(tpomap -> {
-        if (tpomap.size() > 0) {
-          Log.info(String.format("Resent %d messages", tpomap.size()));
-        } else {
-          Log.trace("Resent no messages");
-        }
-      })
-      .replaceWithVoid();
-  }
+  @Inject
+  Mutiny.SessionFactory factory;
 
-  public Multi<String> pollDB() {
-    Log.trace("Initializing DB-poll");
-    return poller.poll("")
-      .onItem().transformToMulti(list ->
-        Multi.createFrom().iterable(list)
-            .onItem().transformToUniAndMerge(msg ->
-              eventBus.<String>request("resend", msg.toMessage())
-                .map(Message::body)
-                .flatMap(newTpo -> MessageDao.setResent(msg)
-                    .map(oldtpo -> String.format("%s -> %s", oldtpo, newTpo)))
-                .invoke(tpo -> Log.debug(String.format("Resent message with [oldtpo -> newtpo] [%s]", tpo)))
-                ));
+  Semaphore semaphore = new Semaphore(1);
+
+  @Scheduled(every = "5s", delay = 5, delayUnit = TimeUnit.SECONDS,
+    concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+  public Uni<Void> scheduler() {
+    if (!semaphore.tryAcquire()) {
+      return Uni.createFrom().voidItem();
+    }
+//    return Multi.createBy().repeating().uni(
+//      () -> Panache.withTransaction(() ->
+//        poller.pollMulti(200)
+//          .onItem().transformToUniAndMerge(dao ->
+//            producer.resend(dao.toMessage())
+//              .flatMap(newTpo -> MessageDao.setResent(dao)))
+//          .collect().with(Collectors.counting())
+//          ))
+//      .until(pollSize -> pollSize == 0)
+//      .collect().with(Collectors.summingLong(count -> count))
+//      .invoke(count -> Log.info(String.format("Resent %d messages", count)))
+//      .invoke(() -> semaphore.release())
+//      .replaceWithVoid();
+    return Multi.createBy().repeating().uni(
+      () ->
+//        () -> MessageDao.toResendX(200),
+//      page -> {
+//          if (page.page().index != 0) {
+//            try {
+//              page = page.nextPage();
+//            } catch (UnsupportedOperationException ex) {
+//              return Uni.createFrom().item(0L);
+//            }
+//          }
+//
+//          return page.stream()
+//            .onItem().transformToUniAndMerge(dao ->
+//            producer.resend(dao.toMessage())
+//              .flatMap(newTpo -> MessageDao.setResent(dao)))
+//            .collect().with(Collectors.counting());
+
+        poller.pollMulti(50)
+          .onItem().transformToUniAndMerge(dao -> Panache.withTransaction(() ->
+            producer.resend(dao.toMessage())
+              .flatMap(newTpo -> MessageDao.setResent(dao)))
+          )
+          .collect().with(Collectors.counting()))
+
+      //})
+      .until(count -> count == 0)
+      .collect().with(Collectors.summingLong(count -> count))
+      .invoke(count -> Log.info(String.format("Resent %d messages", count)))
+      .invoke(() -> semaphore.release())
+      .replaceWithVoid();
   }
 }

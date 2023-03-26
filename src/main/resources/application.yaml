@@ -1,9 +1,11 @@
 quarkus:
+  http:
+    port: 8000
   log:
     level: INFO
     category:
       "se.irori":
-        level: DEBUG
+        level: INFO
 
 #  kafka:
 #    devservices:
@@ -52,7 +54,7 @@ dlqman:
       level: INFO
       category:
         "se.irori":
-          level: DEBUG
+          level: INFO
     kafka:
       devservices:
         image-name: docker.io/vectorized/redpanda:v22.3.11
@@ -63,12 +65,13 @@ dlqman:
           dlq-resend: 1
     hibernate-orm:
       log:
-        sql: false
+        sql: true
       database:
         generation: drop-and-create
     datasource:
       db-kind: postgresql
       reactive:
+        url: postgresql://localhost:5433/dlqman
         max-size: 20
       devservices:
         port: 5433
@@ -111,71 +114,76 @@ dlqman:
         class-name: SimpleResendDLQStrategy
         config:
           nextWaitDuration: 10000
-"%test":
-  dlqman:
-    sources:
-      testsource:
-        name: test-source
-        description: Test source
-        source-topic: dlq-source
-        resend-topic: dlq-resend
-        match-rules:
-          - name: ignore-mine
-            priority: 5
-            matcher: dismiss-matcher
-            strategy: dismiss
-            resend-topic-override: dlq-override
-          - name: resend-theirs
-            priority: 6
-            matcher: resend-matcher
-            strategy: resend10s
-            resend-topic-override: dlq-override
-          - name: ignore-rest
-            priority: 100
-            matcher: all
-            strategy: dismiss
-      consumer-test:
-        name: consumer-test
-        enabled: false
-        description: Test source
-        source-topic: consumer-test
-        resend-topic: dlq-resend
-        match-rules:
-          - name: dismiss-mine
-            priority: 5
-            matcher: dismiss-matcher
-            strategy: dismiss
-            resend-topic-override: dlq-override
-          - name: resend-theirs
-            priority: 6
-            matcher: resend-matcher
-            strategy: resend10s
-            resend-topic-override: dlq-override
-          - name: dismiss-rest
-            priority: 100
-            matcher: all
-            strategy: dismiss
-    matchers:
-      - name: dismiss-matcher
-        class-name: HeaderRegexMatcher
-        config:
-          headerName: myheader
-          regexPattern: dismiss
-      - name: resend-matcher
-        class-name: HeaderRegexMatcher
-        config:
-          headerName: myheader
-          regexPattern: resend
-
-    dlq-strategies:
-      - name: resend10s
-        class-name: SimpleResendDLQStrategy
-        config:
-          nextWaitDuration: 10000
-    publish-consumed-messages: true
-  mp:
-    messaging:
-      outgoing:
-        dlq-source:
-          merge: true
+#"%test":
+#  dlqman:
+#    sources:
+#      testsource:
+#        name: test-source
+#        description: Test source
+#        source-topic: dlq-source
+#        resend-topic: dlq-resend
+#        match-rules:
+#          - name: ignore-mine
+#            priority: 5
+#            matcher: dismiss-matcher
+#            strategy: dismiss
+#            resend-topic-override: dlq-override
+#          - name: resend-theirs
+#            priority: 6
+#            matcher: resend-matcher
+#            strategy: resend10s
+#            resend-topic-override: dlq-override
+#          - name: ignore-rest
+#            priority: 100
+#            matcher: all
+#            strategy: dismiss
+#      consumer-test:
+#        name: consumer-test
+#        enabled: false
+#        description: Test source
+#        source-topic: consumer-test
+#        resend-topic: dlq-resend
+#        match-rules:
+#          - name: dismiss-mine
+#            priority: 5
+#            matcher: dismiss-matcher
+#            strategy: dismiss
+#            resend-topic-override: dlq-override
+#          - name: resend-theirs
+#            priority: 6
+#            matcher: resend-matcher
+#            strategy: resend10s
+#            resend-topic-override: dlq-override
+#          - name: dismiss-rest
+#            priority: 100
+#            matcher: all
+#            strategy: dismiss
+#    matchers:
+#      - name: dismiss-matcher
+#        class-name: HeaderRegexMatcher
+#        config:
+#          headerName: myheader
+#          regexPattern: dismiss
+#      - name: resend-matcher
+#        class-name: HeaderRegexMatcher
+#        config:
+#          headerName: myheader
+#          regexPattern: resend
+#
+#    dlq-strategies:
+#      - name: resend10s
+#        class-name: SimpleResendDLQStrategy
+#        config:
+#          nextWaitDuration: 10000
+#    publish-consumed-messages: true
+#  mp:
+#    messaging:
+#      outgoing:
+#        dlq-source:
+#          connector: smallrye-kafka
+#          merge: true
+#      incoming:
+#        dlq-override:
+#          connector: smallrye-kafka
+#          value.deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
 

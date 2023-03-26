@@ -1,5 +1,6 @@
 package se.irori.ingestion;
 
+import io.quarkus.logging.Log;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.helpers.test.AssertSubscriber;
@@ -24,7 +25,7 @@ public class IntesterTestIT {
 
 
   @Inject
-  @Channel("dlq-source")
+  @Channel("ingester-test")
   Emitter<KafkaProducerRecord> emitter;
 
   @Inject
@@ -40,13 +41,17 @@ public class IntesterTestIT {
       new RecordHeader("mid", uuid.getBytes()),
       new RecordHeader("x-original-topic", "original-topic".getBytes())
     ));
+    Log.info("Sent record to Kafka");
 
     AssertSubscriber<Message> result =
       Multi.createFrom().<Message>emitter(
       em -> {
         bus.localConsumer("ingested-messages").handler(mh -> {
-          em.emit((Message)mh.body());
-          em.complete();
+          Message msg = (Message) mh.body();
+          if (msg.getSourceTopic().equals("ingester-test")) {
+            em.emit((Message) mh.body());
+            em.complete();
+          }
         });
       })
       .subscribe().withSubscriber(AssertSubscriber.create(1));

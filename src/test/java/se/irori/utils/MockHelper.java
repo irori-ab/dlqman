@@ -1,8 +1,6 @@
 package se.irori.utils;
 
 import io.smallrye.reactive.messaging.kafka.api.OutgoingKafkaRecordMetadata;
-import io.vertx.kafka.client.producer.KafkaHeader;
-import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import se.irori.config.Rule;
 import se.irori.config.Source;
@@ -11,7 +9,10 @@ import se.irori.model.Message;
 import se.irori.model.MetaDataType;
 import se.irori.model.Metadata;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.when;
@@ -57,6 +58,7 @@ public final class MockHelper {
       .withHeaders(List.of(headers))
       .build()));
   }
+
 
   public static Source source() {
     return SourceImpl.builder()

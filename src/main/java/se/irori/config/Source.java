@@ -11,6 +11,7 @@ public interface Source {
   String name();
   String description();
   String sourceTopic();
+  @WithDefault("-")
   String resendTopic();
 
   List<Rule> matchRules();

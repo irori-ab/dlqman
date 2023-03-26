@@ -7,6 +7,7 @@ import se.irori.persistence.model.MessageDao;
 import java.util.List;
 
 public interface Poller {
+  Multi<MessageDao> pollMulti(int limit);
 
-  Uni<List<MessageDao>> poll(String input);
+  Uni<List<MessageDao>> pollUni(int limit);
 }

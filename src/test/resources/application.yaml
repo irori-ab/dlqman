@@ -1,20 +1,26 @@
 
 
 "%test":
+  kafka:
+    bootstrap:
+      servers: localhost:19092
   quarkus:
     log:
       level: INFO
       category:
         "se.irori":
+          level: INFO
+        "org.apache.kafka.client":
           level: DEBUG
     kafka:
       devservices:
+        enabled: false
         image-name: docker.io/vectorized/redpanda:v22.3.11
-        port: 9992
         topic-partitions:
           dlq-source: 1
           dlq-override: 1
           dlq-resend: 1
+        #port: 9993
     hibernate-orm:
       log:
         sql: false
@@ -24,27 +30,39 @@
       db-kind: postgresql
       reactive:
         max-size: 20
+        url: postgresql://localhost:15432/dlqman
       devservices:
-        port: 5433
+        enabled: false
         db-name: dlqman
+      username: quarkus
+      password: quarkus
   dlqman:
+    kafka:
+      common:
+        "bootstrap.servers": ${kafka.bootstrap.servers}
+      consumer:
+        "group.id": dlqman
+        "key.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
+        "value.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
+        "auto.offset.reset": earliest
+        "enable.auto.commit": true
+      poll-timeout: 2000
     sources:
-      testsource:
-        name: test-source
-        description: Test source
-        source-topic: dlq-source
-        resend-topic: dlq-resend
+      resend-many:
+        name: resend-many
+        description: Used for resend e2e
+        source-topic: many-source
+        resend-topic: many-dest
         match-rules:
           - name: ignore-mine
             priority: 5
             matcher: dismiss-matcher
             strategy: dismiss
-            resend-topic-override: dlq-override
-          - name: resend-theirs
+          - name: resend-rule
             priority: 6
             matcher: resend-matcher
-            strategy: resend10s
-            resend-topic-override: dlq-override
+            strategy: resendnow
+            resend-topic-override: many-dest
           - name: ignore-rest
             priority: 100
             matcher: all
@@ -61,11 +79,21 @@
             matcher: dismiss-matcher
             strategy: dismiss
             resend-topic-override: dlq-override
-          - name: resend-theirs
+          - name: resend-matcher
             priority: 6
             matcher: resend-matcher
-            strategy: resend10s
+            strategy: resendnow
             resend-topic-override: dlq-override
+          - name: dismiss-rest
+            priority: 100
+            matcher: all
+            strategy: dismiss
+      ingester-test:
+        name: ingester-test
+        enabled: true
+        description: Ingester test
+        source-topic: ingester-test
+        match-rules:
           - name: dismiss-rest
             priority: 100
             matcher: all
@@ -79,18 +107,20 @@
       - name: resend-matcher
         class-name: HeaderRegexMatcher
         config:
-          headerName: myheader
-          regexPattern: resend
+          headerName: resend
+          regexPattern: .*
 
     dlq-strategies:
-      - name: resend10s
+      - name: resendnow
         class-name: SimpleResendDLQStrategy
         config:
-          nextWaitDuration: 10000
+          nextWaitDuration: 1
     publish-consumed-messages: true
   mp:
     messaging:
       outgoing:
-        dlq-source:
+        ingester-test:
+          merge: true
+        consumer-test:
           merge: true
 
