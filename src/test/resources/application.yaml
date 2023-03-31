@@ -1,26 +1,15 @@
 
 
 "%test":
-  kafka:
-    bootstrap:
-      servers: localhost:19092
   quarkus:
     log:
       level: INFO
       category:
         "se.irori":
           level: INFO
-        "org.apache.kafka.client":
-          level: DEBUG
     kafka:
       devservices:
-        enabled: false
-        image-name: docker.io/vectorized/redpanda:v22.3.11
-        topic-partitions:
-          dlq-source: 1
-          dlq-override: 1
-          dlq-resend: 1
-        #port: 9993
+        port: 19092
     hibernate-orm:
       log:
         sql: false
@@ -30,16 +19,10 @@
       db-kind: postgresql
       reactive:
         max-size: 20
-        url: postgresql://localhost:15432/dlqman
-      devservices:
-        enabled: false
-        db-name: dlqman
-      username: quarkus
-      password: quarkus
   dlqman:
     kafka:
       common:
-        "bootstrap.servers": ${kafka.bootstrap.servers}
+        "bootstrap.servers": ${kafka.bootstrap.servers:localhost:19092}
       consumer:
         "group.id": dlqman
         "key.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer

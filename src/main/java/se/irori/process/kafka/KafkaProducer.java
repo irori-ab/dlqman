@@ -4,33 +4,37 @@ import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.mutiny.Uni;
 import io.vertx.kafka.client.common.TopicPartition;
+import io.vertx.mutiny.kafka.client.consumer.KafkaConsumer;
 import io.vertx.mutiny.kafka.client.producer.KafkaHeader;
 import io.vertx.mutiny.kafka.client.producer.KafkaProducerRecord;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import se.irori.config.SharedContext;
 import se.irori.model.Message;
 import se.irori.model.MetaDataType;
 import se.irori.model.Metadata;
 import se.irori.process.ResendProducer;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Singleton
 public class KafkaProducer implements ResendProducer {
 
   final io.vertx.mutiny.kafka.client.producer.KafkaProducer<byte[], byte[]> kafkaProducer;
-  final io.vertx.mutiny.kafka.client.consumer.KafkaConsumer<byte[], byte[]> commonConsumer;
 
   long maxWaitPollExisting;
 
   final SharedContext ctx;
 
-  final Map<String, String> consumerConfig;
+  final AtomicInteger noClients;
+
+  @Inject
+  KafkaConsumerPools pools;
 
 
   public KafkaProducer(SharedContext ctx) {
@@ -40,20 +44,12 @@ public class KafkaProducer implements ResendProducer {
     producerConfig.putAll(ctx.getConfig().kafka().common());
     producerConfig.putAll(ctx.getConfig().kafka().producer());
 
-    Map<String, String> consumerConfig = new HashMap<>();
-    consumerConfig.putAll(ctx.getConfig().kafka().common());
-    consumerConfig.putAll(ctx.getConfig().kafka().consumer());
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "dlqman-resender");
-    consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
     this.kafkaProducer = io.vertx.mutiny.kafka.client.producer.KafkaProducer.create(
       ctx.getVertx(),
       producerConfig,
       byte[].class, byte[].class);
     this.ctx = ctx;
-    this.consumerConfig = consumerConfig;
-    commonConsumer =
-      io.vertx.mutiny.kafka.client.consumer.KafkaConsumer.create(ctx.getVertx(), consumerConfig,
-        byte[].class, byte[].class);
+    noClients = ctx.getMetrics().gauge("noClients", new AtomicInteger(0));
   }
 
   @ConsumeEvent("resend")
@@ -73,13 +69,12 @@ public class KafkaProducer implements ResendProducer {
    * @return A Uni with the producer record or failure.
    */
   private Uni<KafkaProducerRecord<byte[],byte[]>> sourceMessage(Message message) {
-    io.vertx.mutiny.kafka.client.consumer.KafkaConsumer<byte[], byte[]> tempConsumer =
-      io.vertx.mutiny.kafka.client.consumer.KafkaConsumer.create(ctx.getVertx(), consumerConfig,
-      byte[].class, byte[].class);
-    return tempConsumer
-      .assignAndForget(new TopicPartition(message.getSourceTopic(), message.getSourcePartition()))
+    KafkaConsumer<byte[],byte[]> consumer = pools.getConsumer(message.getSourceTopic(),
+      message.getSourcePartition());
+    return
+      consumer
       .seek(new TopicPartition(message.getSourceTopic(), message.getSourcePartition()), message.getSourceOffset())
-      .flatMap(nil -> tempConsumer.poll(Duration.ofMillis(100))
+      .flatMap(nil -> consumer.poll(Duration.ofMillis(100))
         .flatMap(records -> {
           if (records.isEmpty()){
             return Uni.createFrom().failure(
@@ -91,7 +86,7 @@ public class KafkaProducer implements ResendProducer {
             message.getDestinationTopic(), record.key(), record.value())
               .addHeaders(record.headers())
               .addHeaders(convertMessageHeaders(message))))
-      ).onTermination().invoke(tempConsumer::close);
+      );
   }
 
   private List<KafkaHeader> convertMessageHeaders(Message message) {

@@ -1,7 +1,6 @@
 package se.irori.persistence.model;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
-import io.quarkus.hibernate.reactive.panache.PanacheQuery;
 import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
@@ -102,27 +101,10 @@ public class MessageDao extends PanacheEntityBase {
       String.format("%s:%s:%s", dao.getSourceTopic(), dao.getSourcePartition(), dao.getSourceOffset()));
   }
 
-  @ReactiveTransactional
-  public static Uni<List<MessageDao>> toResend() {
-    Log.trace("Fetching messages to resend");
-    return find("#Message.toResend", OffsetDateTime.now()).<MessageDao>list();
-  }
-
-  //@ReactiveTransactional
   public static Uni<List<MessageDao>> toResendLimit(int limit) {
     return find("#Message.toResend", OffsetDateTime.now()).range(0, limit).list();
   }
-  public static PanacheQuery<MessageDao> toResendX(int limit) {
-     return find("#Message.toResend", OffsetDateTime.now()).page(0, limit);
-  }
 
-  @ReactiveTransactional
-  public static Uni<PanacheQuery<MessageDao>> toResendXTransactional(int limit) {
-    return Uni.createFrom().item(
-      find("#Message.toResend", OffsetDateTime.now()).page(0, limit));
-  }
-
-  //@ReactiveTransactional
   public static Uni<String> setResent(MessageDao dao) {
     Log.info(String.format("Updating status on message message [%s]", dao.id.toString()));
     return update("#Message.resent", dao.getId())

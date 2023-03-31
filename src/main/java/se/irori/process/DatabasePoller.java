@@ -14,9 +14,6 @@ public class DatabasePoller implements Poller {
 
   @Override
   public Multi<MessageDao> pollMulti(int limit) {
-//    return Multi.createBy().repeating().uni(AtomicInteger::new,
-//        page -> MessageDao.toResendLimit(limit))
-//      .until(List::isEmpty)
       return MessageDao.toResendLimit(limit)
       .onItem().disjoint();
   }

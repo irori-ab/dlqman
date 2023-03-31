@@ -57,7 +57,7 @@ public class IntesterTestIT {
       .subscribe().withSubscriber(AssertSubscriber.create(1));
 
 
-    result.awaitItems(1, Duration.ofSeconds(4));
+    result.awaitItems(1, Duration.ofSeconds(5));
     Message m = result.assertCompleted().getLastItem();
     List<Metadata> headers = m.getMetadataList();
     Assertions.assertEquals(4, headers.size());

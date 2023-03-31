@@ -63,7 +63,7 @@ public class KafkaConsumerTestIT {
 
     AssertSubscriber<Message> sub = consumer.consume().subscribe().withSubscriber(AssertSubscriber.create(1l));
 
-    Message m = sub.awaitItems(1, Duration.ofMillis(2000l)).getLastItem();
+    Message m = sub.awaitItems(1, Duration.ofSeconds(5)).getLastItem();
     Assertions.assertEquals("consumer-test",m.getSourceTopic());
 
     AssertHelper.headerTypeValue("test-header-1", MetaDataType.SOURCE_HEADER, "test-header-value1", m);

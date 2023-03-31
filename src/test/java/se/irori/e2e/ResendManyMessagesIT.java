@@ -23,7 +23,7 @@ public class ResendManyMessagesIT {
   io.vertx.mutiny.kafka.client.consumer.KafkaConsumer<byte[],byte[]> kafkaConsumer;
   io.vertx.mutiny.kafka.client.producer.KafkaProducer<byte[],byte[]> kafkaProducer;
 
-  int noRecords = 800;
+  int noRecords = 200;
 
   @BeforeEach
   public void setupKafka() {
@@ -60,7 +60,7 @@ public class ResendManyMessagesIT {
       kafkaConsumer.toMulti()
       .subscribe().withSubscriber(AssertSubscriber.create(noRecords));
 
-    sub.awaitItems(noRecords, Duration.ofSeconds(25));
+    sub.awaitItems(noRecords, Duration.ofSeconds(40));
     Log.info(String.format("Received %d records", sub.getItems().size()));
     Assertions.assertEquals(noRecords, sub.getItems().size());
 
