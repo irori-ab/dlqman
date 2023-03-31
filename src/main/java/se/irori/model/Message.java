@@ -1,21 +1,13 @@
 package se.irori.model;
 
-import static javax.persistence.CascadeType.ALL;
-
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
-import io.smallrye.common.constraint.NotNull;
-import java.util.List;
-import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import se.irori.config.Rule;
+
+import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -23,20 +15,23 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Message {
 
-  @Id
-  @NotNull
-  private UUID id;
+  private UUID id = UUID.randomUUID();
+  private String sourceId;
+  private String sourceTopic;
+  private Integer sourcePartition;
 
-  @NotNull
-  private UUID sourceId;
-  private Integer partition;
+  private Long sourceOffset;
 
-  @Column(name = "topic_offset")
-  private Long offset;
-  private byte[] payload;
-  private String payloadString;
-  private String classification;
+  private String fingerprint;
 
-  @OneToMany(mappedBy = "message", cascade = ALL, fetch = FetchType.EAGER)
+  private MessageStatus status;
+
+  private String destinationTopic;
+  private Rule matchedRule;
+
   private List<Metadata> metadataList;
+
+  public String getTPO() {
+    return String.format("%s:%s:%s", sourceTopic, sourcePartition, sourceOffset);
+  }
 }

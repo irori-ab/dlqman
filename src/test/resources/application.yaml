@@ -1,0 +1,109 @@
+
+
+"%test":
+  quarkus:
+    log:
+      level: INFO
+      category:
+        "se.irori":
+          level: INFO
+    kafka:
+      devservices:
+        port: 19092
+    hibernate-orm:
+      log:
+        sql: false
+      database:
+        generation: drop-and-create
+    datasource:
+      db-kind: postgresql
+      reactive:
+        max-size: 20
+  dlqman:
+    kafka:
+      common:
+        "bootstrap.servers": ${kafka.bootstrap.servers:localhost:19092}
+      consumer:
+        "group.id": dlqman
+        "key.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
+        "value.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
+        "auto.offset.reset": earliest
+        "enable.auto.commit": true
+      poll-timeout: 2000
+    sources:
+      resend-many:
+        name: resend-many
+        description: Used for resend e2e
+        source-topic: many-source
+        resend-topic: many-dest
+        match-rules:
+          - name: ignore-mine
+            priority: 5
+            matcher: dismiss-matcher
+            strategy: dismiss
+          - name: resend-rule
+            priority: 6
+            matcher: resend-matcher
+            strategy: resendnow
+            resend-topic-override: many-dest
+          - name: ignore-rest
+            priority: 100
+            matcher: all
+            strategy: dismiss
+      consumer-test:
+        name: consumer-test
+        enabled: false
+        description: Test source
+        source-topic: consumer-test
+        resend-topic: dlq-resend
+        match-rules:
+          - name: dismiss-mine
+            priority: 5
+            matcher: dismiss-matcher
+            strategy: dismiss
+            resend-topic-override: dlq-override
+          - name: resend-matcher
+            priority: 6
+            matcher: resend-matcher
+            strategy: resendnow
+            resend-topic-override: dlq-override
+          - name: dismiss-rest
+            priority: 100
+            matcher: all
+            strategy: dismiss
+      ingester-test:
+        name: ingester-test
+        enabled: true
+        description: Ingester test
+        source-topic: ingester-test
+        match-rules:
+          - name: dismiss-rest
+            priority: 100
+            matcher: all
+            strategy: dismiss
+    matchers:
+      - name: dismiss-matcher
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: myheader
+          regexPattern: dismiss
+      - name: resend-matcher
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: resend
+          regexPattern: .*
+
+    dlq-strategies:
+      - name: resendnow
+        class-name: SimpleResendDLQStrategy
+        config:
+          nextWaitDuration: 1
+    publish-consumed-messages: true
+  mp:
+    messaging:
+      outgoing:
+        ingester-test:
+          merge: true
+        consumer-test:
+          merge: true
+

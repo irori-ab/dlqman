@@ -1,15 +1,93 @@
 quarkus:
-  kafka:
-    devservices:
-      port: 9992
-  hibernate-orm:
-    database:
-      generation: drop-and-create
+  http:
+    port: 8000
+  log:
+    level: INFO
+    category:
+      "se.irori":
+        level: INFO
+
   datasource:
     db-kind: postgresql
-source:
+    reactive:
+      max-size: 20
+  micrometer:
+    binder:
+      kafka:
+        enabled: true
+      vertx:
+        enabled: true
+
+dlqman:
   kafka:
-    - bootstrap-servers: localhost:9992
-      group-id: group-id
-      topics:
-        - spring-cloud-dlq-topic
+    common:
+      "bootstrap.servers": ${kafka.bootstrap.servers:localhost:19092}
+    consumer:
+      "group.id": dlqman
+      "key.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
+      "value.deserializer": org.apache.kafka.common.serialization.ByteArrayDeserializer
+      "auto.offset.reset": earliest
+      "enable.auto.commit": true
+    poll-timeout: 2000
+
+"%dev":
+  quarkus:
+    log:
+      level: INFO
+      category:
+        "se.irori":
+          level: INFO
+    kafka:
+      devservices:
+        image-name: docker.io/vectorized/redpanda:v22.3.11
+        port: 19092
+    hibernate-orm:
+      log:
+        sql: true
+      database:
+        generation: drop-and-create
+    datasource:
+      db-kind: postgresql
+      reactive:
+        max-size: 20
+      devservices:
+        port: 15432
+        db-name: dlqman
+  dlqman:
+    sources:
+      test-source:
+        name: test-source
+        description: Test source
+        source-topic: dlq-source
+        resend-topic: dlq-resend
+        match-rules:
+          - name: save-fatal
+            priority: 5
+            matcher: exception-is-fatal
+            strategy: dismiss
+          - name: resend-retryable
+            priority: 6
+            matcher: exception-is-retryable
+            strategy: resend10s
+            resend-topic-override: dlq-override
+          - name: catchtherest
+            priority: 100
+            matcher: all
+            strategy: void
+    matchers:
+      - name: exception-is-retryable
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: internal-dlq-exception-class
+          regexPattern: .*RetryableException.*
+      - name: exception-is-fatal
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: internal-dlq-exception-class
+          regexPattern: .*FatalException.*
+
+    dlq-strategies:
+      - name: resend10s
+        class-name: SimpleResendDLQStrategy
+        config:
+          nextWaitDuration: 10000
