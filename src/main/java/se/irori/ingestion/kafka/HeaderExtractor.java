@@ -71,8 +71,6 @@ public class HeaderExtractor {
   private Long offset;
   private String timestamp;
   private String timestampType;
-  private String exceptionStackTrace;
-  private String exceptionMessage;
 
   private final Map<String, String> nonMatchedHeaders;
   private final Map<String, String> matchedHeaders;
@@ -109,7 +107,7 @@ public class HeaderExtractor {
         return;
       }
       if (timeStampTypeHeaders.contains(header.key())) {
-        timestamp = header.value().toString();
+        timestampType = header.value().toString();
         matchedHeaders.put(header.key(), header.value().toString());
         return;
       }

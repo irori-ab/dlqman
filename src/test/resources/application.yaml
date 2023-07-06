@@ -1,5 +1,3 @@
-
-
 "%test":
   quarkus:
     log:
@@ -44,8 +42,12 @@
           - name: resend-rule
             priority: 6
             matcher: resend-matcher
-            strategy: resendnow
+            strategy: resendNow
             resend-topic-override: many-dest
+          - name: resend-delay-rule
+            priority: 7
+            matcher: resend-delay-matcher
+            strategy: resend20s
           - name: ignore-rest
             priority: 100
             matcher: all
@@ -65,7 +67,7 @@
           - name: resend-matcher
             priority: 6
             matcher: resend-matcher
-            strategy: resendnow
+            strategy: resendNow
             resend-topic-override: dlq-override
           - name: dismiss-rest
             priority: 100
@@ -85,19 +87,31 @@
       - name: dismiss-matcher
         class-name: HeaderRegexMatcher
         config:
-          headerName: myheader
+          headerName: dlqMatcher
           regexPattern: dismiss
       - name: resend-matcher
         class-name: HeaderRegexMatcher
         config:
-          headerName: resend
-          regexPattern: .*
+          headerName: dlqMatcher
+          regexPattern: resend
+      - name: resend-delay-matcher
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: dlqMatcher
+          regexPattern: resendWithDelay
 
     dlq-strategies:
-      - name: resendnow
+      #dismiss and void are "default"
+      #dismiss = persisting, but not handling
+      #void = not persisting not handling
+      - name: resendNow
         class-name: SimpleResendDLQStrategy
         config:
           nextWaitDuration: 1
+      - name: resend20s
+        class-name: SimpleResendDLQStrategy
+        config:
+          nextWaitDuration: 20000
     publish-consumed-messages: true
   mp:
     messaging:
