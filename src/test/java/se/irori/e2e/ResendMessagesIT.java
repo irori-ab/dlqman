@@ -7,6 +7,7 @@ import io.vertx.mutiny.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.mutiny.kafka.client.producer.KafkaProducerRecord;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import se.irori.config.SharedContext;
 
@@ -45,6 +46,12 @@ public class ResendMessagesIT {
                 byte[].class, byte[].class);
         this.kafkaConsumer.subscribeAndAwait("many-dest");
         this.kafkaConsumer.seekToBeginningAndAwait(kafkaConsumer.assignmentAndAwait());
+    }
+
+    @AfterEach
+    public void closeKafka() {
+        kafkaConsumer.closeAndAwait();
+        kafkaProducer.closeAndAwait();
     }
 
 
