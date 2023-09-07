@@ -15,8 +15,7 @@ env:
   QUARKUS_CONTAINER_IMAGE_NAME: dlqman
   QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ github.actor }}
   QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-  QUARKUS_CONTAINER_IMAGE_TAG: ${{ env.GITHUB_REF_NAME }}
-  IMAGE_NAME: ${{ env.QUARKUS_CONTAINER_IMAGE_GROUP }}/${{ env.QUARKUS_CONTAINER_IMAGE_NAME }}
+  QUARKUS_CONTAINER_IMAGE_TAG: ${{ github.ref_name }}
 
 # There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
@@ -34,11 +33,11 @@ jobs:
       - name: Test
         run: ./mvnw test verify --batch-mode
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-        with:
-          images: ${{ env.QUARKUS_CONTAINER_IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
+      #- name: Extract metadata (tags, labels) for Docker
+      #  id: meta
+      #  uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+      #  with:
+      #    images: ${{ env.QUARKUS_CONTAINER_IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
 
       # TODO how to set tags from steps.meta.outputs.labels
       - name: build java image
