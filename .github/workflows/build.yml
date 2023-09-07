@@ -32,4 +32,4 @@ jobs:
         run: ./mvnw test verify --batch-mode
 
       - name: build java image
-        run: ./mvnw install -DskipTests -Dquarkus.container-image.build=true --batch-mode -Dquarkus.container-image.push=true
+        run: ./mvnw install -DskipTests -Dquarkus.container-image.registry=ghcr.io --batch-mode -Dquarkus.container-image.push=true
