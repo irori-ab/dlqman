@@ -15,6 +15,7 @@ env:
   QUARKUS_CONTAINER_IMAGE_NAME: dlqman
   QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ github.actor }}
   QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+  QUARKUS_CONTAINER_IMAGE_TAG: ${env.GITHUB_REF_NAME}
 
 # There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
@@ -33,4 +34,4 @@ jobs:
         run: ./mvnw test verify --batch-mode
 
       - name: build java image
-        run: ./mvnw install -DskipTests --batch-mode -Dquarkus.container-image.push=true
+        run: ./mvnw install -DskipTests --batch-mode -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true
