@@ -36,14 +36,14 @@ dlqman:
       level: INFO
       category:
         "se.irori":
-          level: INFO
+          level: DEBUG
     kafka:
       devservices:
         image-name: docker.io/vectorized/redpanda:v22.3.11
         port: 19092
     hibernate-orm:
       log:
-        sql: true
+        sql: false
       database:
         generation: drop-and-create
     datasource:
@@ -53,6 +53,7 @@ dlqman:
       devservices:
         port: 15432
         db-name: dlqman
+        password: dlqman
   dlqman:
     sources:
       test-source:
