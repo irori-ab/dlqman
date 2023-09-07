@@ -34,7 +34,7 @@ jobs:
 #          }]
 
     - name: Test
-      run: mvn clean test
+      run: ./mvnw clean test --batch-mode
 
     - name: Native Test
-      run: mvn verify -Pnative
+      run: ./mvnw verify -Pnative --batch-mode

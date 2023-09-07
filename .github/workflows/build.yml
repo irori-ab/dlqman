@@ -1,0 +1,43 @@
+#
+name: Create and publish a Docker image
+
+# Configures this workflow to run every time a change is pushed to the branch called `release`.
+on:
+  push:
+    branches: ['main']
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
+env:
+  QUARKUS_CONTAINER_IMAGE_REGISTRY: ghcr.io
+  QUARKUS_CONTAINER_IMAGE_GROUP: irori-ab
+  QUARKUS_CONTAINER_IMAGE_NAME: dlqman
+  QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ github.actor }}
+  QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+  QUARKUS_CONTAINER_IMAGE_TAG: ${{ github.ref_name }}
+
+# There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+    permissions:
+      contents: read
+      packages: write
+      #
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Test
+        run: ./mvnw test verify --batch-mode
+
+      #- name: Extract metadata (tags, labels) for Docker
+      #  id: meta
+      #  uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+      #  with:
+      #    images: ${{ env.QUARKUS_CONTAINER_IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # TODO how to set tags from steps.meta.outputs.labels
+      - name: build java image
+        run: ./mvnw install -DskipTests --batch-mode -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true
