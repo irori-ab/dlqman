@@ -8,6 +8,9 @@ Open source application that simplifies error handling in your Kafka integration
 ## Usage
 DLQman requires connectivity to a kafka broker and a database. The connectivity details can be configured inside [application.yaml](src/main/resources/application.yaml)
 
+## Tutorial
+See the [tutorial](tutorial.md) for a longer example scenario.
+
 ### Config reference
 ```yaml
   dlqman:
@@ -55,6 +58,11 @@ You can run your application in dev mode that enables live coding using:
 ./mvnw compile quarkus:dev
 ```
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+
+## Access the Kafka Dev UI
+
+http://localhost:8000/q/dev/io.quarkus.quarkus-kafka-client/kafka-dev-ui
+
 
 ## Reference Documentation
 

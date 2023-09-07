@@ -80,6 +80,8 @@ public class Ingester {
           message.setDestinationTopic(rule.resendTopicOverride().get());
         }
         return;
+      } else {
+        log.debug("Rule did not match: {}", rule.name());
       }
     }
     log.debug("No rules matched message {}", message.getId());

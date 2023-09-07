@@ -15,6 +15,14 @@
     <quarkus.platform.version>2.16.10.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
   </properties>
+  <licenses>
+     <license>
+      <name>Apache-2.0</name>
+       <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
   <dependencyManagement>
     <dependencies>
       <dependency>
