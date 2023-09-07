@@ -11,7 +11,8 @@ on:
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
   QUARKUS_CONTAINER_IMAGE_REGISTRY: ghcr.io
-  QUARKUS_CONTAINER_IMAGE_IMAGE: ${{ github.repository }}
+  QUARKUS_CONTAINER_IMAGE_GROUP: irori-ab
+  QUARKUS_CONTAINER_IMAGE_NAME: dlqman
   QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ github.actor }}
   QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
@@ -32,4 +33,4 @@ jobs:
         run: ./mvnw test verify --batch-mode
 
       - name: build java image
-        run: ./mvnw install -DskipTests -Dquarkus.container-image.registry=ghcr.io --batch-mode -Dquarkus.container-image.push=true
+        run: ./mvnw install -DskipTests --batch-mode -Dquarkus.container-image.push=true
