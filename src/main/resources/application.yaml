@@ -6,7 +6,8 @@ quarkus:
     category:
       "se.irori":
         level: INFO
-
+  management:
+    enabled: true
   datasource:
     db-kind: postgresql
     reactive:
