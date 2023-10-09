@@ -64,6 +64,27 @@ You can run your application in dev mode that enables live coding using:
 http://localhost:8000/q/dev/io.quarkus.quarkus-kafka-client/kafka-dev-ui
 
 
+## Testing with Docker Compose
+
+Either build the image yourself:
+```
+./mvnw install -DskipTests --batch-mode -Dquarkus.container-image.build=true
+```
+
+Or set an appropriate release tag in `docker-compose.yml`. Then: 
+```
+docker-compose up
+
+docker run --tty --network dlqman edenhill/kcat:1.7.1 kcat -b kafka:9092 -L
+
+# send a message
+echo tryMeAgain | docker run -i --network dlqman edenhill/kcat:1.7.1 kcat -b kafka:9092 -t dlq-source -P -H "internal-dlq-exception-class=QuiteRetryableException"
+
+docker run --tty --network dlqman edenhill/kcat:1.7.1 kcat -b kafka:9092 -C -t resend-override
+
+# follow the tutorial.md with kcat commands run via above Docker exec kcat mechanism
+```
+
 ## Reference Documentation
 
 - [Irori Product Page](https://irori.se/products/dlqman/)

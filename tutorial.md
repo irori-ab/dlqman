@@ -62,7 +62,7 @@ The `%dev` configuration used is found in `src/main/resources/application.yaml`:
             priority: 6
             matcher: exception-is-retryable
             strategy: resend10s
-            resend-topic-override: dlq-override
+            resend-topic-override: resend-override
           - name: catchtherest
             priority: 100
             matcher: all
@@ -101,7 +101,7 @@ On a high level:
        * matches if the header with key `internal-dlq-exception-class` matches the regex `.*RetryableException.*`
      * strategy: `resend10s` (defined further down in config)
        * Resend the message after 10 s
-     * also overrides the resend topic to `dlq-override`
+     * also overrides the resend topic to `resend-override`
   3. `catchtherest`
       * matcher: `all` (built-in matcher)
         * matches all messages
@@ -138,7 +138,7 @@ Metadata for all topics (from broker 0: localhost:19092/0):
 The `dlq-source` topic is up and running, great! Let's send a dummy message!
 
 ```
-> echo "is my letter dead?" | kcat -b localhost:19092 -t dlq-source -t dlq-source
+> echo "is my letter dead?" | kcat -b localhost:19092 -t dlq-source
 ```
 
 You can actually see the messages in the Quarkus Kafka Dev UI:
@@ -158,7 +158,7 @@ Lets commit a fatal mistake:
 
 ```
 > echo "this is an ex-letter, it's pining for the fjords" \
- | kcat -b localhost:19092 -t dlq-source -t dlq-source -H "internal-dlq-exception-class=SuperFatalException"
+ | kcat -b localhost:19092 -t dlq-source -H "internal-dlq-exception-class=SuperFatalException"
 ```
 
 Now the logs:
@@ -184,15 +184,15 @@ And the logs:
 
 ... 
 
-... Resent message with [oldtpo -> newtpo] [dlq-source:0:2 -> dlq-override:0:0], ts: 
+... Resent message with [oldtpo -> newtpo] [dlq-source:0:2 -> resend-override:0:0], ts: 
 ... Updating status on message message [a4062082-6399-4440-b5bc-14bc5ea521da]
 ```
 
 And inspecting the resend topic:
 ```
-> kcat -b localhost:19092 -C -t dlq-override -f 'Headers: %h; Message value: %s\n'
+> kcat -b localhost:19092 -C -t resend-override -f 'Headers: %h; Message value: %s\n'
 Headers: internal-dlq-exception-class=QuiteRetryableException; Message value: I'm a zombie parrot
-% Reached end of topic dlq-override [0] at offset 1
+% Reached end of topic resend-override [0] at offset 1
 ```
 
 And that's it for basic DLQMan functionality! 

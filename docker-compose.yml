@@ -1,0 +1,61 @@
+version: '3.8'
+services:
+  dlqman:
+    #image: ghcr.io/irori-ab/dlqman:v0.5.0
+    image: ghcr.io/irori-ab/dlqman:1.0.0-SNAPSHOT
+    ports:
+      - '8000:8000'
+    environment:
+      - QUARKUS_DATASOURCE_USERNAME=postgres
+      - QUARKUS_DATASOURCE_PASSWORD=postgres
+      - QUARKUS_DATASOURCE_REACTIVE_URL=postgresql://db:5432/postgres
+      - _COMPOSE_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - QUARKUS_PROFILE=compose
+    depends_on:
+     - db
+     - kafka
+    networks:
+      - dlqman-network
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGUSER=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    ports:
+      - '5432:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data
+    networks:
+      - dlqman-network
+  kafka:
+    image: docker.redpanda.com/redpandadata/redpanda:v22.3.11
+    command:
+      - redpanda start
+      - --smp 1
+      - --overprovisioned
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://kafka:9092,external://localhost:19092
+    ports:
+      - 19092:19092
+    networks:
+      - dlqman-network
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+volumes:
+  db:
+    driver: local
+networks:
+  dlqman-network:
+    name: dlqman
