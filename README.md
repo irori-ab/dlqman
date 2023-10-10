@@ -3,7 +3,7 @@ Open source application that simplifies error handling in your Kafka integration
 
 ## Overview design
 
-![DLQman module diagram](/docs/DLQman_modules.png)
+![DLQman module diagram](./docs/DLQman_modules.png)
 
 ## Usage
 DLQman requires connectivity to a kafka broker and a database. The connectivity details can be configured inside [application.yaml](src/main/resources/application.yaml)
