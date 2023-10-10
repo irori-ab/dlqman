@@ -63,12 +63,12 @@
             priority: 5
             matcher: dismiss-matcher
             strategy: dismiss
-            resend-topic-override: dlq-override
+            resend-topic-override: resend-override
           - name: resend-matcher
             priority: 6
             matcher: resend-matcher
             strategy: resendNow
-            resend-topic-override: dlq-override
+            resend-topic-override: resend-override
           - name: dismiss-rest
             priority: 100
             matcher: all

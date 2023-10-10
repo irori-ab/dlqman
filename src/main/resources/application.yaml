@@ -18,6 +18,10 @@ quarkus:
         enabled: true
       vertx:
         enabled: true
+  container-image:
+    name: dlqman
+    group: irori-ab
+    registry: ghcr.io
 
 dlqman:
   kafka:
@@ -71,7 +75,56 @@ dlqman:
             priority: 6
             matcher: exception-is-retryable
             strategy: resend10s
-            resend-topic-override: dlq-override
+            resend-topic-override: resend-override
+          - name: catchtherest
+            priority: 100
+            matcher: all
+            strategy: void
+    matchers:
+      - name: exception-is-retryable
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: internal-dlq-exception-class
+          regexPattern: .*RetryableException.*
+      - name: exception-is-fatal
+        class-name: HeaderRegexMatcher
+        config:
+          headerName: internal-dlq-exception-class
+          regexPattern: .*FatalException.*
+
+    dlq-strategies:
+      - name: resend10s
+        class-name: SimpleResendDLQStrategy
+        config:
+          nextWaitDuration: 10000
+
+"%compose":
+  quarkus:
+    log:
+      level: INFO
+      category:
+        "se.irori":
+          level: DEBUG
+  dlqman:
+    kafka:
+      common:
+        "bootstrap.servers": ${kafka.bootstrap.servers:localhost:19092}
+    sources:
+      test-source:
+        name: test-source
+        description: Test source
+        source-topic: dlq-source
+        resend-topic: dlq-resend
+        match-rules:
+          - name: save-fatal
+            priority: 5
+            matcher: exception-is-fatal
+            strategy: dismiss
+          - name: resend-retryable
+            priority: 6
+            matcher: exception-is-retryable
+            strategy: resend10s
+            resend-topic-override: resend-override
           - name: catchtherest
             priority: 100
             matcher: all
